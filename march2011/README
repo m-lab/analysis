@@ -1,0 +1,24 @@
+ABOUT THE FILES:
+1. httpgetmt.commented.sql: This is a commented version of the sql 
+file that the FCC used to do their analysis. Only the interesting
+parts of the file are commented (defining and filling the temporary
+tables and calculating peak usage). The original came from ....
+2. speed.sql.sh: A shell script to generate sql that can be used
+with bq to generate results for sustained speeds during 24-hour and 
+peak periods. 
+3. tables.md: A description of the tables contained in the dataset 
+and the mechanics of the FCC's analysis of the data contained 
+therein.
+4. sources.md: Information about where to find the raw and 
+validated results from the FCC's tests. 
+
+COMMENTS:
+To take out the comments from the sql submitted to bigquery, use
+this sed command:
+./<sql generating script> | sed -r 's/^[[:space:]]{0,}#.*$//'
+
+ABOUT THE CAVEATS:
+All the caveats of the analysis are derived from the FCC's analysis
+done for their July 2012 report using April 2012 data. More 
+information about this can be found here: 
+http://www.fcc.gov/measuring-broadband-america/2012/validated-data-april-2012

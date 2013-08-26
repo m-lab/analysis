@@ -1,0 +1,143 @@
+curr_httpgetmt bytes_sec 'and sequence=5 and successes=1' mlab2.nuq01 ['mlab3.lax01']
+mlab3.lax01 shares 87 of 94 packages with mlab2.nuq01
+mlab3.lax01 missing 7 packages
+mlab3.lax01
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+mlab3.lax01 171129.0 100532 70597.0 1987273.0
+mlab3.lax01 node affected: 0.412536741289 mlab affected: 0.035524560541
+curr_httpgetmt bytes_sec 'and sequence=5 and successes=1' mlab2.lga02 ['mlab1.lga02', 'mlab3.lga02']
+mlab1.lga02 shares 87 of 96 packages with mlab2.lga02
+mlab1.lga02 missing 9 packages
+mlab3.lga02 shares 91 of 103 packages with mlab2.lga02
+mlab3.lga02 missing 12 packages
+mlab1.lga02
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+mlab3.lga02
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+mlab1.lga02 102057.0 73039 29018.0 1987273.0
+mlab1.lga02 node affected: 0.284331305055 mlab affected: 0.0146019193136
+mlab3.lga02 100600.0 71051 29549.0 1987273.0
+mlab3.lga02 node affected: 0.293727634195 mlab affected: 0.0148691196428
+curr_httppostmt bytes_sec 'and sequence=5 and successes=1' mlab2.nuq01 ['mlab3.lax01']
+mlab3.lax01 shares 86 of 94 packages with mlab2.nuq01
+mlab3.lax01 missing 8 packages
+mlab3.lax01
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+mlab3.lax01 175590.0 115270 60320.0 1980256.0
+mlab3.lax01 node affected: 0.343527535737 mlab affected: 0.0304607081105
+curr_httppostmt bytes_sec 'and sequence=5 and successes=1' mlab2.lga02 ['mlab1.lga02', 'mlab3.lga02']
+mlab1.lga02 shares 87 of 94 packages with mlab2.lga02
+mlab1.lga02 missing 7 packages
+mlab3.lga02 shares 89 of 101 packages with mlab2.lga02
+mlab3.lga02 missing 12 packages
+mlab1.lga02
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+mlab3.lga02
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+mlab1.lga02 104524.0 74771 29753.0 1980256.0
+mlab1.lga02 node affected: 0.284652328652 mlab affected: 0.0150248250731
+mlab3.lga02 102671.0 72113 30558.0 1980256.0
+mlab3.lga02 node affected: 0.297630294825 mlab affected: 0.0154313381704
+curr_udplatency rtt_avg 'and successes+failures>50 and successes>0' mlab2.nuq01 ['mlab3.lax01']
+mlab3.lax01 shares 87 of 94 packages with mlab2.nuq01
+mlab3.lax01 missing 7 packages
+mlab3.lax01
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+mlab3.lax01 356798.0 180636 176162.0 4138104.0
+mlab3.lax01 node affected: 0.493730346022 mlab affected: 0.0425707038779
+curr_udplatency rtt_avg 'and successes+failures>50 and successes>0' mlab2.lga02 ['mlab1.lga02', 'mlab3.lga02']
+mlab1.lga02 shares 91 of 98 packages with mlab2.lga02
+mlab1.lga02 missing 7 packages
+mlab3.lga02 shares 93 of 105 packages with mlab2.lga02
+mlab3.lga02 missing 12 packages
+mlab1.lga02
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+mlab3.lga02
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+mlab1.lga02 217958.0 45021 172937.0 4138104.0
+mlab1.lga02 node affected: 0.79344185577 mlab affected: 0.0417913614544
+mlab3.lga02 208101.0 37853 170248.0 4138104.0
+mlab3.lga02 node affected: 0.818102748185 mlab affected: 0.04114154695
+curr_udplatency failures/(successes+failures) 'and successes+failures>50 and successes>0' mlab2.nuq01 ['mlab3.lax01']
+mlab3.lax01 shares 87 of 94 packages with mlab2.nuq01
+mlab3.lax01 missing 7 packages
+mlab3.lax01
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+mlab3.lax01 356798.0 63846 292952.0 4138104.0
+mlab3.lax01 node affected: 0.821058414005 mlab affected: 0.0707937741536
+curr_udplatency failures/(successes+failures) 'and successes+failures>50 and successes>0' mlab2.lga02 ['mlab1.lga02', 'mlab3.lga02']
+mlab1.lga02 shares 91 of 98 packages with mlab2.lga02
+mlab1.lga02 missing 7 packages
+mlab3.lga02 shares 93 of 105 packages with mlab2.lga02
+mlab3.lga02 missing 12 packages
+mlab1.lga02
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+mlab3.lga02
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+mlab1.lga02 217958.0 55305 162653.0 4138104.0
+mlab1.lga02 node affected: 0.746258453464 mlab affected: 0.0393061653356
+mlab3.lga02 208101.0 51431 156670.0 4138104.0
+mlab3.lga02 node affected: 0.752855584548 mlab affected: 0.0378603341047
+curr_udpjitter latency 'and successes=1' mlab2.nuq01 ['mlab3.lax01']
+mlab3.lax01 shares 87 of 95 packages with mlab2.nuq01
+mlab3.lax01 missing 8 packages
+mlab3.lax01
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+mlab3.lax01 366757.0 213134 153623.0 4297133.0
+mlab3.lax01 node affected: 0.418868624184 mlab affected: 0.0357501152513
+curr_udpjitter latency 'and successes=1' mlab2.lga02 ['mlab1.lga02', 'mlab3.lga02']
+mlab1.lga02 shares 90 of 97 packages with mlab2.lga02
+mlab1.lga02 missing 7 packages
+mlab3.lga02 shares 95 of 107 packages with mlab2.lga02
+mlab3.lga02 missing 12 packages
+mlab1.lga02
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+mlab3.lga02
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+mlab1.lga02 221038.0 132273 88765.0 4297133.0
+mlab1.lga02 node affected: 0.40158253332 mlab affected: 0.0206567960545
+mlab3.lga02 214936.0 126751 88185.0 4297133.0
+mlab3.lga02 node affected: 0.410284922023 mlab affected: 0.0205218223406
+curr_videostream latency 'and successes=1' mlab2.nuq01 ['mlab3.lax01']
+mlab3.lax01 shares 84 of 92 packages with mlab2.nuq01
+mlab3.lax01 missing 8 packages
+mlab3.lax01
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+mlab3.lax01 318472.0 204793 113679.0 3758459.0
+mlab3.lax01 node affected: 0.356951317541 mlab affected: 0.0302461727
+curr_videostream latency 'and successes=1' mlab2.lga02 ['mlab1.lga02', 'mlab3.lga02']
+mlab1.lga02 shares 82 of 92 packages with mlab2.lga02
+mlab1.lga02 missing 10 packages
+mlab3.lga02 shares 90 of 100 packages with mlab2.lga02
+mlab3.lga02 missing 10 packages
+mlab1.lga02
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+mlab3.lga02
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+mlab1.lga02 196729.0 137104 59625.0 3758459.0
+mlab1.lga02 node affected: 0.303081904549 mlab affected: 0.0158642145624
+mlab3.lga02 194720.0 135510 59210.0 3758459.0
+mlab3.lga02 node affected: 0.304077649959 mlab affected: 0.0157537969684
+curr_ping rtt_avg 'and successes=5' mlab2.nuq01 ['mlab3.lax01']
+mlab3.lax01 shares 88 of 95 packages with mlab2.nuq01
+mlab3.lax01 missing 7 packages
+mlab3.lax01
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+mlab3.lax01 377979.0 243718 134261.0 4332068.0
+mlab3.lax01 node affected: 0.355207564441 mlab affected: 0.0309923574607
+curr_ping rtt_avg 'and successes=5' mlab2.lga02 ['mlab1.lga02', 'mlab3.lga02']
+mlab1.lga02 shares 92 of 99 packages with mlab2.lga02
+mlab1.lga02 missing 7 packages
+mlab3.lga02 shares 97 of 109 packages with mlab2.lga02
+mlab3.lga02 missing 12 packages
+mlab1.lga02
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+mlab3.lga02
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 
+mlab1.lga02 217850.0 145641 72209.0 4332068.0
+mlab1.lga02 node affected: 0.331462015148 mlab affected: 0.0166684825815
+mlab3.lga02 210785.0 139583 71202.0 4332068.0
+mlab3.lga02 node affected: 0.337794435088 mlab affected: 0.01643603009
+tests to all nodes: 20493293.0
+tests to affected nodes: 3858694.0
+affected tests: 1609901.0

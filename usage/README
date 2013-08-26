@@ -1,0 +1,4 @@
+Taking usage_stats_servers.txt from M-Lab, this generates a movie with one day
+per frame. Each frame consists of a grid in which the rows represent tools
+running on M-Lab and the columns represent servers. The colour of a given cell
+is more saturated if more tests were run on that day for a given tool.

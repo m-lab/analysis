@@ -1,0 +1,54 @@
+QueryView
+=========
+
+Queryview can help an analyst quickly perform BigQuery queries, cache the
+result, and graph the data in the result for review and sharing.
+
+Installation
+------------
+
+The script is self-contained, so can be placed anywhere.  Just be aware that it
+reads SQL files and writes cache files from/to the $PWD.  
+
+Queryview relies on two dependencies:
+
+ * BigQuery command line tool `bq`:
+
+    https://code.google.com/p/google-bigquery-tools/"
+
+ * `matplotlib`: http://matplotlib.org/
+
+    Most Linux distributions have this available as a package as
+    'python-matplotlib' or 'py-matplotlib', or similar.
+
+Usage
+-----
+
+See the usage from:
+
+    ./queryview.py --help
+
+Examples:
+--------
+
+You may immediately explore any web100 variable for NDT download tests using 
+the included template sql/ndt-tmpl-web100.sql. It expects three variables: 
+
+  * DATETABLE for the months of the query.
+  * ADDRESS for a single IP address of a host
+  * WEB100VAR the full path of the web100 variable in m_lab bigquery table.
+
+  ./queryview.py -q ndt-tmpl-web100 \
+                 -D DATETABLE=[m_lab.2013_03],[m_lab.2013_04],[m_lab.2013_05] \
+                 -D ADDRESS=38.102.0.109 \
+                 -D WEB100VAR=web100_log_entry.snap.SmoothedRTT \
+                 -t day_timestamp \
+                 -l med_web100 -C blue \
+                 -l quantile_10 -C green \
+                 -l quantile_90 -C green \
+                 --count_column test_count --ymax 500 \
+                 --date_vline 2013-05-09 \
+                 --title 'Daily web100.SmoothedRTT for NDT on mlab3.sea01' \
+                 --ylabel Milliseconds \
+                 --output mlab3.sea01.SmoothedRTT.png
+

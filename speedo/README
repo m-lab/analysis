@@ -1,0 +1,8 @@
+Visualizes various aspect of the data collected by 'Speedometer'.
+
+Before running the geoviz.py script, create a data/ folder and copy data from
+cloud storage into it:
+
+$ gsutil cp -R gs://speedometer/2012 data/
+
+

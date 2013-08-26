@@ -1,0 +1,101 @@
+march2012
+=========
+
+Analysis of MLab March 2012
+
+Environment Setup
+=================
+
+This analysis was originally developed inside an ipython notebook.
+
+Once the module dependencies are installed on your system, the script will
+execute correctly outside of an ipython notebook.  However, features such as
+graph generation will not be available.
+
+To access these features, configure your environment to support ipython 
+notebooks, create a new notebook, and copy the analysis code into the notebook.
+
+Install:
+
+    NOTE: easy_install may automatically pull in some other deps.
+
+    The iPython notebooks used were version 0.13 or greater.
+    At the time of writing, the only source of this version was through
+    easy_install setup.
+
+    The basic packages are: 
+        * mysql-server - for the mysql data dump from Samknows
+        * python-mysqldb - for python-to-mysql queries
+        * pandas    - a numeric library
+        * matplotlib - the main graphing engine used by ipython
+
+    Only if configuring ipython:
+        * ipython - for notebooks and easy graphing.
+
+    Some of these packages have additional dependencies.
+        $ sudo apt-get install python-mysqldb
+        $ sudo apt-get install mysql-server
+
+    This may pull in all the requirements for ipython and pandas automatically.
+        $ sudo easy_install ipython
+        $ sudo easy_install pandas        # if not installed as part of ipython
+
+    But, sometimes not all packages are pulled automatically.  Other needed 
+    packages for some systems are:
+        $ sudo easy_install MySQL-python
+        $ sudo easy_install NumPy
+        $ sudo easy_install tornado
+        $ sudo easy_install pyzmq
+        $ sudo easy_install matplotlib
+        
+    Mac OSX:
+        # if the mysql library is 32-bit only...
+        # or, if the 32-bit version is installed on a 64-bit system
+        PATH="/usr/local/mysql/bin:${PATH}"
+        export PATH
+        export DYLD_LIBRARY_PATH=/usr/local/mysql/lib/
+        export VERSIONER_PYTHON_PREFER_64_BIT=no
+        export VERSIONER_PYTHON_PREFER_32_BIT=yes
+
+BigQuery:
+
+    Some data is stored in bigquery.  You will need to request access to the
+    M-Lab bigquery project.
+
+    Install the bigquery command line tool:
+        $ sudo easy_install bigquery
+
+    Then, follow the on-screen directions provided by:
+        $ bq init
+
+    Be sure to choose the "measurement-lab   M-Lab" project as default.
+
+    You should now be able to run queries:
+        $ bq query "select count(*) from m_lab.2012_08;"
+
+Import SQL:
+
+    # example given for expediency not security.
+    $ sudo mysqladmin -uroot -p create march2012
+
+    # raw.sql is the raw samknows db dump.
+    $ sudo mysql -uroot -p march2012 < raw.sql 
+
+    # to grant access to db from your current user:
+    $ mysql -uroot 
+    mysql> grant all on march2012.* to ''@localhost;
+
+    ## NOTE: you can rename an existing DB by migrating all tables 
+    ## from the old name to a new name.
+        RENAME TABLE samknows.unit_location     TO march2012.unit_location;
+
+Start notebook:
+
+    $ ipython notebook --pylab inline
+
+    This should open a web browser with a list of notebooks in the CWD. Click
+    on one and it should open like a document.  Without the extra args above,
+    graphs will not load in-line.
+    
+
+
