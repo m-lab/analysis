@@ -1,0 +1,33 @@
+#!/bin/bash
+# doDockerPyplot [build] [shell]
+
+set -e
+DOCKER_TAG=measurementlab/nbrunner
+
+# deduce the user credentials: fail if not exactly one
+shopt -s nullglob
+CREDS=`echo ~/.config/gcloud/legacy_credentials/*`
+if [ `echo "$CREDS" | wc -w` != 1 ]; then
+  echo "Did not find exactly one credential: $CREDS"
+  exit 2
+fi
+
+if [ x$1 = xbuild ]; then
+  shift
+  sudo docker build . -t $DOCKER_TAG
+  echo "Consider: docker push $DOCKER_TAG"
+fi
+
+if [ x$1 = xshell ]; then
+  shift
+  doshell="-it --entrypoint=/bin/bash"
+fi
+
+DATADIR=$HOME/data
+
+set -x
+sudo docker run --net=host -v `pwd`:`pwd` -v $DATADIR:/data \
+  -v  ~/.config/gcloud/legacy_credentials/mattmathis@google.com:/creds \
+  -w `pwd` -e GOOGLE_APPLICATION_CREDENTIALS=/creds/adc.json \
+  --user $UID --group-add users \
+  $doshell $DOCKER_TAG
