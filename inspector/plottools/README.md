@@ -22,5 +22,5 @@ doDockerPyplot [build] shell
 The optional build is only needed the first time and when things change.
 If the build is needed, it has to be invoked in the source directory.
 
-(Docker setup was borrowed from from Peter's
+(Docker setup was borrowed from the
  ["Pilot Exit Blog Post"](https://www.measurementlab.net/blog/global-pilot-success/) )
