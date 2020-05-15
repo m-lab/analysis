@@ -1,0 +1,32 @@
+#!/bin/bash
+# dockerPython [build] [shell]
+
+set -eo pipefail
+DOCKER_TAG=measurementlab/pyrunner
+
+# deduce the user credentials: fail if not exactly one
+shopt -s nullglob
+CREDS=$(echo ~/.config/gcloud/legacy_credentials/*)
+if [ "$(echo "$CREDS" | wc -w)" != 1 ]; then
+  echo "Did not find exactly one credential: $CREDS"
+  exit 2
+fi
+
+if [ "x$1" = xbuild ]; then
+  shift
+  # Copy some stuff from the juptyer plotting/dev area
+  mkdir -p tmp
+  cp ../plottools/*.py tmp
+  sudo docker build . -t "$DOCKER_TAG"
+  # rm -rf tmp
+  echo "Consider: docker push $DOCKER_TAG"
+fi
+
+# show what we are actually doing
+PWD="$(pwd)"
+
+sudo docker run --net=host \
+  -v  "${CREDS}":/creds \
+  -e GOOGLE_APPLICATION_CREDENTIALS=/creds/adc.json \
+  --user $UID --group-add users \
+  -it $DOCKER_TAG "$*"
