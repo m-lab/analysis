@@ -15,6 +15,7 @@ Patterns={
     'TestDate':[
         ('[tT]est.*[dD]ate', '{c}'),
         ('[pP]artition.*[dD]ate','{c}'),
+        ('log_time', 'DATE({c})')
     ],
     'fileName':[
         ('[fF]ile[nN]ame', '{c}'),
@@ -28,11 +29,12 @@ Patterns={
         'a.UUID',
         'result.Control.UUID',
         ('UUID', '{c}'),
+        'test_id',
         ('.', '"ERROR_DISCOVERING_UUID"')  # default to an errored UUID
     ]
 }
 
-def columnMatcher(patterns, cols, verbose=False):
+def columnMatcher(patterns, cols, needed=None, verbose=False):
     """Infer BQ expressions to extract required columns
     """
     def matchHelper(var, matches, cols, verbose):
@@ -50,14 +52,16 @@ def columnMatcher(patterns, cols, verbose=False):
             for c in cols:
                 if re.search(r, c):
                     return {var:v.format(c=c)}
+        print("Warning no mapping for", var)
         return {var:None}
 
     res={}
     for var, matches in patterns.items():
-        res.update({var:None})
-        if verbose:
-            print ('VAR:', var, matches)
-        res.update(matchHelper(var, matches, cols, verbose))
+      if needed and var not in needed:
+        continue
+      if verbose:
+        print ('VAR:', var, matches)
+      res.update(matchHelper(var, matches, cols, verbose))
 
     return res
 
@@ -65,12 +69,10 @@ def UnitTestColumnMatcher():
     tests=['test__date', 'TestDate', 'PartitionDate', 'ParseInfo.TaskFileName' ]
     for t in tests:
         print ("   Test", t)
-        print ('===  Result:', t, columnMatcher(Patterns, [t], verbose=False))
+        print ('===  Result:', t, columnMatcher(Patterns, [t]))
 
-
-def inferColumns(table):
-    return columnMatcher(Patterns, bq.getColumns(table))
-
+def inferColumns(table, needed=None):
+    return columnMatcher(Patterns, bq.getColumns(table), needed)
 
 mainQ="""
 WITH
@@ -79,7 +81,7 @@ canonic AS (
   SELECT
     {TestDate} AS TestDate,
     REGEXP_EXTRACT({fileName}, 'mlab[1-4]-[a-z][a-z][a-z][0-9][0-9t]') AS ShortName,
-    {parseTime} AS _ParseTime,
+    {parseTime} AS ParseTime,
     {UUID} AS UUID,
   FROM `{fullTableName}`
 ),
@@ -94,7 +96,7 @@ HotUUIDs AS (
 ),
 
 ServerSet AS (
-  SELECT ShortName AS _UniqueName FROM canonic GROUP BY ShortName
+  SELECT ShortName AS UniqueName FROM canonic GROUP BY ShortName
 ),
 
 ServerDays AS (
@@ -107,30 +109,51 @@ ServerDays AS (
   GROUP BY ShortName
 ),
 
+# Since some messages need to be strings, we force all to be strings
 RawReport AS (
-  SELECT 10 AS seq, "Total Days" AS name, DATE_DIFF(MAX(TestDate), MIN(TestDate), DAY)+1 AS val FROM canonic UNION ALL
-  SELECT 11, "Missing Days", DATE_DIFF(MAX(TestDate), MIN(TestDate), DAY)+1 - COUNT( DISTINCT TestDate) FROM canonic UNION ALL
+  SELECT 10 AS seq, "Total Days" AS name, CAST(DATE_DIFF(MAX(TestDate), MIN(TestDate), DAY)+1 AS STRING) AS val FROM canonic UNION ALL
+  SELECT 11, "Missing Days", CAST(DATE_DIFF(MAX(TestDate), MIN(TestDate), DAY)+1 - COUNT( DISTINCT TestDate) AS STRING) FROM canonic UNION ALL
+  SELECT 12, "First Day", CAST(MIN(TestDate) AS STRING) FROM canonic UNION ALL
+  SELECT 13, "Last Day", CAST(MAX(TestDate) AS STRING) FROM canonic UNION ALL
 
-  SELECT 20, "Total Rows", COUNT (*) FROM canonic UNION ALL
-  SELECT 21, "Missing UUIDs (ERROR_DISCOVERING_UUID)", COUNTIF (UUID is Null OR UUID = 'ERROR_DISCOVERING_UUID') FROM canonic UNION ALL
-  SELECT 22, "Duplicated UUIDs", COUNTIF(UUID IS NOT NULL AND UUID != 'ERROR_DISCOVERING_UUID') - COUNT( DISTINCT UUID ) FROM canonic UNION ALL
-  SELECT 23, CONCAT("Top dup:", UUID), cnt FROM HotUUIDs UNION ALL
+  SELECT 20, "Total Rows", CAST(COUNT (*) AS STRING) FROM canonic UNION ALL
+  SELECT 21, "Missing UUIDs (ERROR_DISCOVERING_UUID)", CAST(COUNTIF (UUID is Null OR UUID = 'ERROR_DISCOVERING_UUID') AS STRING) FROM canonic UNION ALL
+  SELECT 22, "Duplicated UUIDs",CAST( COUNTIF(UUID IS NOT NULL AND UUID != 'ERROR_DISCOVERING_UUID') - COUNT( DISTINCT UUID ) AS STRING) FROM canonic UNION ALL
+  SELECT 23, CONCAT("Top dup:", UUID), CAST(cnt AS STRING) FROM HotUUIDs UNION ALL
+  SELECT 24, "Total unique UUIDs", CAST(COUNT( DISTINCT UUID ) AS STRING) FROM canonic UNION ALL
 
-  SELECT 30, "Total Servers", COUNT ( DISTINCT ShortName ) FROM canonic UNION ALL
-  SELECT 31, "Rows Missing Servers", COUNTIF ( ShortName IS Null ) FROM canonic UNION ALL
-  SELECT 32, "Test Servers (0t, 1t)", COUNTIF ( _UniqueName like '%t' ) FROM ServerSet UNION ALL
-  SELECT 33, "Mlab4's", COUNTIF ( _UniqueName like 'mlab4%'  ) FROM ServerSet UNION ALL
+  SELECT 30, "Total Servers", CAST(COUNT ( DISTINCT ShortName ) AS STRING) FROM canonic UNION ALL
+  SELECT 31, "Rows Missing Servers", CAST(COUNTIF ( ShortName IS Null ) AS STRING) FROM canonic UNION ALL
+  SELECT 32, "Test Servers (0t, 1t)", CAST(COUNTIF ( UniqueName like '%t' ) AS STRING) FROM ServerSet UNION ALL
+  SELECT 33, "Mlab4's", CAST(COUNTIF ( UniqueName like 'mlab4%' ) AS STRING) FROM ServerSet UNION ALL
 
-  SELECT 40, "Currently Active Servers", COUNTIF ( DATE_DIFF(CURRENT_DATE(), EndDate, DAY) < 4) FROM ServerDays UNION ALL
-  SELECT 41, "Total Server-days", SUM(cnt) FROM ServerDays UNION ALL
-  SELECT 42, "Missing Server-days", SUM(missing) FROM ServerDays UNION ALL
+  SELECT 40, "Currently Active Servers", CAST(COUNTIF ( DATE_DIFF(CURRENT_DATE(), EndDate, DAY) < 4) AS STRING) FROM ServerDays UNION ALL
+  SELECT 41, "Total Server-days", CAST(SUM(cnt) AS STRING) FROM ServerDays UNION ALL
+  SELECT 42, "Missing Server-days", CAST(SUM(missing) AS STRING) FROM ServerDays UNION ALL
 
-  SELECT 99, "End-of-Report", 0.0
+  SELECT 50, "Oldest Parse Time", CAST(MIN(ParseTime) AS STRING) FROM canonic UNION ALL
+  SELECT 51, "Newest Parse Time",CAST( MAX(parseTime) AS STRING) FROM canonic UNION ALL
+  SELECT 52, "Span of Parse dates", CAST(TIMESTAMP_DIFF(MAX(parseTime),  MIN(ParseTime), day) AS STRING) FROM canonic UNION ALL
+
+  SELECT 99, "End-of-Report", ""
 )
 
-select seq, name, safe_cast(val AS string) AS val FROM RawReport ORDER BY seq
-# select * FROM RawReport ORDER BY seq
+select * FROM RawReport ORDER BY seq
+
 """
+
+
+def resourceReport(rows=0):
+    print('Resource consumption')
+    fmt="%20s: %s"
+    if rows>0:
+      print (fmt%('Rows (M)', rows/1000000))
+    print (fmt%('slot_milli', bq.jobInfo.slot_millis))
+    if rows>0:
+      print (fmt%('slot_milli/row', bq.jobInfo.slot_millis/rows))
+    print (fmt%('bytes processed', bq.jobInfo.total_bytes_processed))
+    if rows>0:
+      print (fmt%('bytes processed/row', bq.jobInfo.total_bytes_processed/rows))
 
 def inventoryTable(fullTableName):
 #    project, dataset, table = fullTableName.split('.')
@@ -144,14 +167,8 @@ def inventoryTable(fullTableName):
     for i in res['seq']:
         print ("%50s %s"%(res['name'][i], res['val'][i]))
 
-    print('Resource consumption')
     totalRows=int(res.loc[20]['val'])  # seq of "Total Rows"
-    fmt="%20s: %s"
-    print (fmt%('Rows (M)', totalRows/1000000))
-    print (fmt%('slot_milli', bq.jobInfo.slot_millis))
-    print (fmt%('slot_milli/row', bq.jobInfo.slot_millis/totalRows))
-    print (fmt%('bytes processed', bq.jobInfo.total_bytes_processed))
-    print (fmt%('bytes processed/row', bq.jobInfo.total_bytes_processed/totalRows))
+    resourceReport(totalRows)
     return
 
 def UnitTestInventoryTable():
@@ -169,13 +186,13 @@ def inventoryDataSet(dataSet):
         except Exception as e:
             print ("   Crashed: ", type(e))
 
-def inspectDataSetMappings(dataSet):
+def inspectDataSetMappings(dataSet, needed=None):
     tables=bq.getTables(dataSet)
     for t in tables:
         table = dataSet+'.'+t
         print('')
         print ('Table column mappings for', table)
-        expansion=inferColumns(table)
+        expansion=inferColumns(table, needed)
         for v, e in expansion.items():
             print ("%40s AS %s"%(e, v))
 
