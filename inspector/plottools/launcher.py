@@ -2,22 +2,31 @@
 
 # Launch python tools inside of continer pyrunner from within dockerPython.sh
 
-import argparse
+from optparse import OptionParser
 import inspectTable
+#  inspectTable = None # Need a better stub
 
 if __name__ == "__main__":
-  parser = argparse.ArgumentParser(description='Insepct MLab views or tables.',
-                                   epilog="Action must be one of: inventory dataset",
-                                   allow_abbrev=True)
-  parser.add_argument('action', metavar='action', type=str, help='Test to per performed')
-  parser.add_argument('tables', metavar='names', type=str, nargs='+', help='Tables or other objects to be inspected')
+  parser = OptionParser()
 
-  args = parser.parse_args()
-  if args.action == 'inventory' :
-    for t in args.tables:
-      inspectTable.inventoryTable(t)
-  elif args.action == 'dataset' :
-    for t in args.tables:
+  parser.add_option('--dataset', action="store_true", dest="dataset", default=False,
+                    help='List of tables, views or datasets to inspect')
+# these don't work yet
+#  parser.add_option('--quick', action="store_true", dest="quick", default=False,
+#                    help='Minimal quick inspection')
+#  parser.add_option('--extended', action="store_true", dest="extended", default=False,
+#                    help='Extended inspection')
+
+  (options, pargs) = parser.parse_args()
+  # Insist that the first arg is a command name
+  if len(pargs) < 1 or "inspect".find(pargs[0]) != 0:
+    print ("Currently the only supported command is 'inspect'")
+    parser.print_help()
+    exit (2)
+
+  if options.dataset:
+    for t in pargs[1:]:
       inspectTable.inventoryDataSet(t)
   else:
-    parser.print_help()
+    for t in pargs[1:]:
+      inspectTable.inventoryTable(t)
