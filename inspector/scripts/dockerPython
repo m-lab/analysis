@@ -22,11 +22,10 @@ if [ "x$1" = xbuild ]; then
   echo "Consider: docker push $DOCKER_TAG"
 fi
 
-# show what we are actually doing
 PWD="$(pwd)"
 
 sudo docker run --net=host \
   -v  "${CREDS}":/creds \
   -e GOOGLE_APPLICATION_CREDENTIALS=/creds/adc.json \
   --user $UID --group-add users \
-  -it $DOCKER_TAG "$*"
+  -it $DOCKER_TAG "./launcher.py $*"
