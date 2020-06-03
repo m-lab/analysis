@@ -2,31 +2,34 @@
 
 # Launch python tools inside of continer pyrunner from within dockerPython.sh
 
-from optparse import OptionParser
+import argparse
 import inspectTable
-#  inspectTable = None # Need a better stub
+# inspectTable = None # Need a better stub
 
 if __name__ == "__main__":
-  parser = OptionParser()
+  parser = argparse.ArgumentParser(description='Inspect MLab Tables and views')
+  parser.add_argument("command",
+                      help="Currently only inspect")
+  parser.add_argument("table", nargs='+',
+                      help='Table or datasets to inspect')
+  parser.add_argument('--dataset', action="store_true", dest="dataset", default=False,
+                    help='Inspect all of the tables or views in a BQ dataset')
+  parser.add_argument('--minimal', action="store_true", dest="quick", default=False,
+                    help='Minimal (quick) inspection')
+  parser.add_argument('--extended', action="store_true", dest="extended", default=False,
+                    help='Extended (slower) inspection')
 
-  parser.add_option('--dataset', action="store_true", dest="dataset", default=False,
-                    help='List of tables, views or datasets to inspect')
-# these don't work yet
-#  parser.add_option('--quick', action="store_true", dest="quick", default=False,
-#                    help='Minimal quick inspection')
-#  parser.add_option('--extended', action="store_true", dest="extended", default=False,
-#                    help='Extended inspection')
+  args = parser.parse_args()
 
-  (options, pargs) = parser.parse_args()
   # Insist that the first arg is a command name
-  if len(pargs) < 1 or "inspect".find(pargs[0]) != 0:
+  if args.command != 'inspect':
     print ("Currently the only supported command is 'inspect'")
     parser.print_help()
     exit (2)
 
-  if options.dataset:
-    for t in pargs[1:]:
-      inspectTable.inventoryDataSet(t)
+  if args.dataset:
+    for t in args.table:
+      inspectTable.inventoryDataSet(t, **vars(args))
   else:
-    for t in pargs[1:]:
-      inspectTable.inventoryTable(t)
+    for t in args.table:
+      inspectTable.inventoryTable(t, **vars(args))
