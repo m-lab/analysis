@@ -15,6 +15,7 @@ fi
 if [ "x$1" = xbuild ]; then
   shift
   # Copy some stuff from the juptyer plotting/dev area
+  cd ../../inspector/scripts
   mkdir -p tmp
   cp ../plottools/*.py tmp
   sudo docker build . -t "$DOCKER_TAG"

@@ -6,6 +6,7 @@
 
 import sys
 import re
+from optparse import OptionParser
 import BQhelper as bq
 import pandas as pd
 
@@ -162,14 +163,14 @@ def resourceReport(rows=0):
     if rows>0 and bq.jobInfo.total_bytes_processed>0:
       print (fmt%('bytes processed/row', bq.jobInfo.total_bytes_processed/rows))
 
-def inventoryTable(fullTableName, args={}):
+def inventoryTable(fullTableName, **args):
     print ('Inferred Column Mappings')
     expansion=inferColumns(fullTableName)
     for v, e in expansion.items():
         print ("%40s AS %s"%(e, v))
-    if 'quick' in args and args.quick:
+    if args.get('quick'):
       expandedReport = ''
-    elif 'extended' in args and args.extended:
+    elif args.get('extended'):
       expandedReport = defaultQ + extendedQ
     else:
       expandedReport = defaultQ
@@ -185,7 +186,7 @@ def inventoryTable(fullTableName, args={}):
 def UnitTestInventoryTable():
     inventoryTable('measurement-lab.ndt.ndt5')
 
-def inventoryDataSet(dataSet, args={}):
+def inventoryDataSet(dataSet, **args):
     tables=bq.getTables(dataSet)
     for t in tables:
         table = dataSet+'.'+t
