@@ -1,6 +1,6 @@
 -- from .../analysis/inspector/summary_views/{{query}}
 SELECT
-  "{{Datasource}}_{{Direction}}" AS Source,
+  "{{Datasource}}_{{AdditionalArg}}" AS Source,
   EXTRACT(YEAR from date) AS year,
   Null AS SubSource,
   "{{query}}" AS inspector,
@@ -24,7 +24,8 @@ SELECT
   ROUND(100*COUNTIF( client.Geo.latitude != 0.0 OR client.Geo.longitude != 0.0 ) / count(*)) AS OkLatLong,
   ROUND(100*COUNTIF( Server.Network.ASnumber IS NOT NULL ) / count(*)) AS OkASN
 -- ROUND(100*COUNTIF( TRUE ) / count(*)) AS OkNews,
-FROM `{{Datasource}}_{{Direction}}`
+FROM `{{Datasource}}_{{AdditionalArg}}`
+WHERE date > '2008-01-01'
 
 GROUP BY Source, year
 ORDER BY Source, year

@@ -8,14 +8,14 @@
 --
 
 SELECT * FROM (
-  (SELECT * FROM `{{ProjectID}}.inspector.traceroute_prod`)
+  (SELECT * FROM `{{ProjectID}}.inspector.summarize_traceroute_prod`)
 UNION ALL
-  (SELECT * FROM `{{ProjectID}}.inspector.traceroute_prod_legacy`)
+  (SELECT * FROM `{{ProjectID}}.inspector.summarize_traceroute_prod_legacy`)
 UNION ALL
-  (SELECT * FROM `{{ProjectID}}.inspector.traceroute_oti`)
+  (SELECT * FROM `{{ProjectID}}.inspector.summarize_traceroute_oti`)
 UNION ALL
-  (SELECT * FROM `{{ProjectID}}.inspector.traceroute_staging`)
+  (SELECT * FROM `{{ProjectID}}.inspector.summarize_traceroute_staging`)
 UNION ALL
-  (SELECT * FROM `{{ProjectID}}.inspector.traceroute_sandbox`)
+  (SELECT * FROM `{{ProjectID}}.inspector.summarize_traceroute_sandbox`)
 )
 ORDER BY YEAR, Source

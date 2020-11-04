@@ -1,8 +1,12 @@
 -- from .../analysis/inspector/summary_views/{{query}}
+-- This is the same as inspect_ndt_components, except it uses archaic column names:
+-- test_date instead of date
+-- (Potentially others in the future)
 SELECT
-  "{{Datasource}}_{{Direction}}" AS Source,
+  "{{Datasource}}_{{AdditionalArg}}" AS Source,
   EXTRACT(YEAR from test_date) AS year,
   Null AS SubSource,
+  "{{query}}" AS inspector,
 
   MIN(test_date) as first, MAX(test_date) as last,
 
@@ -23,7 +27,7 @@ SELECT
   ROUND(100*COUNTIF( client.Geo.latitude != 0.0 OR client.Geo.longitude != 0.0 ) / count(*)) AS OkLatLong,
   ROUND(100*COUNTIF( Server.Network.ASnumber IS NOT NULL ) / count(*)) AS OkASN
 -- ROUND(100*COUNTIF( TRUE ) / count(*)) AS OkNews,
-FROM `{{ProjectID}}.{{Datasource}}_{{Direction}}`
+FROM `{{Datasource}}_{{AdditionalArg}}`
 
 GROUP BY Source, year
 ORDER BY Source, year
