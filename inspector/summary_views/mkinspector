@@ -1,0 +1,121 @@
+#!/bin/bash
+
+# Build inspection scripts
+
+function mkview {
+  # mkview target, file, project
+  target=$1		# dataset.view
+  file=$2		# .sql file
+  sourceset=${3-'NONE'}		# source file prefix
+  AdditionalArg=$4
+  
+  ProjectID=mlab-sandbox  # for target and execution
+
+
+  # Forbid tabs
+  if fgrep -s $'\t' $file ; then
+    echo "Error: $file contains tabs"
+    exit 2
+  fi
+
+  date=`date`
+  view=`echo "-- Gemerated by $USER $date" ; \
+    sed -e 's/"/'"'/g" \
+    -e "s;{{ProjectID}};${ProjectID};" \
+    -e "s;{{Datasource}};${sourceset};" \
+    -e "s;{{AdditionalArg}};${AdditionalArg};" \
+    -e "s;{{query}};${file};" $file `
+
+  bq rm \
+    --force \
+    --project_id $ProjectID \
+    "${target}"
+  if true; then
+     echo "Create ${ProjectID}.${target} from $sourceset using $file"
+     bq mk \
+       --force \
+       --view "$view" \
+       --use_legacy_sql=false \
+       --project_id=${ProjectID} \
+       --description "test_view compiled: $(date)" \
+       "${target}"
+     echo '' # improve readability 
+  else
+    echo "Skipping "Create ${ProjectID}.${target}""
+  fi
+};
+
+###### Main ######
+
+if false; then
+  echo "semi-private NDT alpha testing"
+  subsource=ndt7
+  for direction in uploads downloads ; do
+    mkview mm_unified_testing.summarize_ndt_ndt7_downloads inspect_ndt_components.sql \
+      mm_unified_testing.ndt_unified_${subsource} ${direction}
+    mkview mm_unified_testing.union_ndt_prod_testing_ndt7_downloads union_ndt.sql \
+      inspector.summarize_ndt_prod_${subsource}_${direction} \
+      mm_unified_testing.summarize_ndt_${subsource}_${direction}
+  done
+fi
+
+echo "NDT summaries"
+# NB: a few of these are missing (ndt7 staging)
+subsources="ndt7 ndt5 web100"
+while read pname source ; do
+  for direction in uploads downloads ; do
+    for subsource in $subsources ; do
+      if [ \( $pname = "prod" -o $pname = "staging" \) -a \( $subsource = "ndt5" -o $subsource = "web100" \) ] ; then 
+        mkview  inspector.summarize_ndt_${pname}_${subsource}_${direction} inspect_ndt_legacy.sql \
+          ${source}_${subsource} ${direction}
+      elif [ $pname != "staging" -a $subsource != "ndt7" ] ; then
+        mkview  inspector.summarize_ndt_${pname}_${subsource}_${direction} inspect_ndt_components.sql \
+          ${source}_${subsource} ${direction}
+      else
+        echo "Skipping ${source} ${subsource} ${direction}"
+      fi
+    done
+  done
+done <<EOF
+prod mlab-oti.library.ndt_unified
+staging mlab-staging.library.ndt_unified
+sandbox mlab-sandbox.intermediate_ndt.extended
+EOF
+
+# NDT unions, sandbox and prod only
+pname=sandbox
+subsources="ndt7 ndt5 web100"
+for direction in uploads downloads ; do
+  for subsource in $subsources ; do
+    mkview inspector.union_ndt_prod_${pname}_${subsource}_${direction} union_ndt.sql \
+      inspector.summarize_ndt_prod_${subsource}_${direction} \
+      inspector.summarize_ndt_${pname}_${subsource}_${direction}
+  done
+  mkview inspector.union_ndt_prod_${pname}_all union_ndt_all.sql $pname
+done
+
+
+# Traceroute
+mkview inspector.summarize_traceroute_prod inspect_traceroute.sql measurement-lab.ndt.traceroute
+mkview inspector.summarize_traceroute_prod_legacy inspect_traceroute_legacy.sql mlab-oti.base_tables.traceroute_legacy
+while read pname source ; do
+    mkview inspector.summarize_traceroute_${pname} inspect_traceroute_base_tables.sql $source.base_tables.traceroute
+done <<EOF
+oti mlab-oti
+staging mlab-staging
+sandbox mlab-sandbox
+EOF
+
+# Traceroute union
+mkview inspector.union_traceroute union_traceroute.sql
+
+
+
+#### NB: inspect_ndt_unified.sql is busted because it does the union before the stats, instead of after
+# mkview mm_unified_testing.ndt_sandbox_unified inspect_ndt_unified.sql mlab-sandbox.mm_unified_testing
+# mkview inspector.summarize_ndt_sandbox_unified inspect_ndt_unified.sql mlab-sandbox.ndt
+# mkview inspector.summarize_ndt_staging_unified inspect_ndt_unified.sql mlab-staging.ndt
+# mkview inspector.summarize_ndt_public_unified inspect_ndt_unified.sql measurement-lab.ndt
+
+
+

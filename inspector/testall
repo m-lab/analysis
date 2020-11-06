@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# install all views locally
+
+tool=bqsandbox  # Makes views in mlab-sandbox.mm_unified_testing
+
+set -e
+
+(cd ~/Projects/etl-schema/views
+
+# New intermediate_ndt
+$tool ../views/intermediate_ndt/referenced-by/extended_ndt7_downloads.sql
+$tool ../views/intermediate_ndt/referenced-by/extended_ndt5_downloads.sql
+$tool ../views/intermediate_ndt/referenced-by/extended_web100_downloads.sql
+$tool ../views/intermediate_ndt/referenced-by/extended_ndt7_uploads.sql
+$tool ../views/intermediate_ndt/referenced-by/extended_ndt5_uploads.sql
+$tool ../views/intermediate_ndt/referenced-by/extended_web100_uploads.sql
+
+# Stub old library
+# $tool ../views/library/referenced-by/ndt_unified_ndt7_downloads.sql
+# $tool ../views/library/referenced-by/ndt_unified_ndt5_downloads.sql
+# $tool ../views/library/referenced-by/ndt_unified_web100_downloads.sql
+# $tool ../views/library/referenced-by/ndt_unified_ndt7_uploads.sql
+# $tool ../views/library/referenced-by/ndt_unified_ndt5_uploads.sql
+# $tool ../views/library/referenced-by/ndt_unified_web100_uploads.sql
+
+# New unified
+$tool ../views/ndt/referenced-by/referenced-by/unified_downloads.sql
+$tool ../views/ndt/referenced-by/referenced-by/unified_uploads.sql
+# filtered
+$tool ../views/ndt/referenced-by/referenced-by/ndt7_downloads.sql
+$tool ../views/ndt/referenced-by/referenced-by/ndt7_uploads.sql
+# Legacy unified
+$tool ../views/ndt/referenced-by/referenced-by/unified_downloads_*.sql
+$tool ../views/ndt/referenced-by/referenced-by/unified_uploads_*.sql
+# Revised comments
+$tool ../views/ndt/ndt5.sql
+$tool ../views/ndt/tcpinfo.sql
+$tool ../views/ndt/traceroute.sql
+$tool ../views/ndt/web100.sql
+)
+
+exit
+
+
+
+# bq query --project_id mlab-sandbox "$(cat test.sql)"
+
+
+
