@@ -13,20 +13,23 @@ import pandas as pd
 # Infer subexpressions to access indicator columns
 # Column Matcher
 Patterns={
-    'TestDate':[
+    'TestDate':[  # NB: Row dates are converted to TIMESTAMP to facilitate comparsions, etc
+        ('[dD]ate', 'TIMESTAMP({c})'),
         ('[tT]est.*[dD]ate', 'TIMESTAMP({c})'),
         ('[pP]artition.*[dD]ate','TIMESTAMP({c})'),
         ('log_time', 'TIMESTAMP({c})')
     ],
     'fileName':[
+        ('Machine', 'CONCAT(server.Machine,"-",server.Site)'),
         ('[fF]ile[nN]ame', '{c}'),
         ('.','"No Server Name"'),   # default to an unreasonable name
     ],
     'parseTime':[
         ('[pP]arse.*[tT]ime', '{c}'),
-        ('.', "TIMESTAMP('1970-01-01')")
+        ('.', "TIMESTAMP('1970-01-01')")   # default to an unreasonable time
     ],
     'UUID':[
+        ('id', '{c}'),
         'a.UUID',
         'result.Control.UUID',
         ('UUID', '{c}'),

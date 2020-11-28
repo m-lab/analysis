@@ -161,6 +161,7 @@ def UnitTestWriteQuery():
 # Misc helper functions
 # These are genericly useful
 
+# This is misnamed: it should be "getViews". getTables is different.
 def getTables(dataSet):
   """Get all of the tables and views in a BQ dataset
   """
