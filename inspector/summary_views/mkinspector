@@ -31,7 +31,7 @@ function mkview {
     --project_id $ProjectID \
     "${target}"
   if true; then
-     echo "Create ${ProjectID}.${target} from $sourceset using $file"
+     echo "Create ${ProjectID}.${target} from $sourceset $AdditionalArg using $file"
      bq mk \
        --force \
        --view "$view" \
@@ -65,12 +65,12 @@ subsources="ndt7 ndt5 web100"
 while read pname source ; do
   for direction in uploads downloads ; do
     for subsource in $subsources ; do
-      if [ \( $pname = "prod" -o $pname = "staging" \) -a \( $subsource = "ndt5" -o $subsource = "web100" \) ] ; then 
-        mkview  inspector.summarize_ndt_${pname}_${subsource}_${direction} inspect_ndt_legacy.sql \
-          ${source}_${subsource} ${direction}
-      elif [ $pname != "staging" -a $subsource != "ndt7" ] ; then
-        mkview  inspector.summarize_ndt_${pname}_${subsource}_${direction} inspect_ndt_components.sql \
-          ${source}_${subsource} ${direction}
+      if [ \( $pname = "prod" \) -a \( $subsource = "ndt5" -o $subsource = "web100" \) ] ; then 
+        mkview  inspector.summarize_ndt_${pname}_${subsource}_${direction} inspect_ndt_legacy_date.sql \
+          ${source} ${subsource}_${direction}
+      elif [ $pname != "XXstaging" -o $subsource != "ndt7" ] ; then
+        mkview  inspector.summarize_ndt_${pname}_${subsource}_${direction} inspect_ndt_extended.sql \
+          ${source} ${subsource}_${direction}
       else
         echo "Skipping ${source} ${subsource} ${direction}"
       fi
@@ -78,7 +78,7 @@ while read pname source ; do
   done
 done <<EOF
 prod mlab-oti.library.ndt_unified
-staging mlab-staging.library.ndt_unified
+staging mlab-staging.intermediate_ndt.extended
 sandbox mlab-sandbox.intermediate_ndt.extended
 EOF
 
