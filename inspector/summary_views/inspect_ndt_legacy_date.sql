@@ -3,7 +3,7 @@
 -- test_date instead of date
 -- (Potentially others in the future)
 SELECT
-  EXTRACT(YEAR from test_date) AS year,
+  EXTRACT({{dates}} from test_date) AS dates,
   "{{AdditionalArg}}" AS SubSource,
   "{{query}}" AS inspector,
   "{{Datasource}}_{{AdditionalArg}}" AS Source,
@@ -23,10 +23,10 @@ SELECT
   ROUND(100*COUNTIF(1.0 <= a.MinRTT AND a.MinRTT < 500.0) / count(*)) AS OkRTT,
   ROUND(100*COUNTIF(0.0 <= a.LossRate AND a.LossRate < 0.5) / count(*)) AS OkLoss,
   ROUND(100*COUNTIF( client.Geo.latitude != 0.0 OR client.Geo.longitude != 0.0 ) / count(*)) AS OkLatLong,
-#  ROUND(100*COUNTIF( LENGTH(client.Geo.country_code)>1 ) / count(*)) AS OkCountry,
+  ROUND(100*COUNTIF( LENGTH(client.Geo.country_code)>1 ) / count(*)) AS OkCountry,
   ROUND(100*COUNTIF( LENGTH(client.Geo.Region)>1 ) / count(*)) AS OkRegion,
 #  ROUND(100*COUNTIF( LENGTH(client.Geo.Subdivision1Name)>1 ) / count(*)) AS OkSub1Name,
-#  ROUND(100*COUNTIF( LENGTH(client.Geo.postal_code)>1 ) / count(*)) AS OkPostalC,
+  ROUND(100*COUNTIF( LENGTH(client.Geo.postal_code)>1 ) / count(*)) AS OkPostalC,
   ROUND(100*COUNTIF( client.Network.ASnumber IS NOT NULL ) / count(*)) AS OkASN,
 #  ROUND(100*COUNTIF( client.Network.ASName IS NOT NULL ) / count(*)) AS OkASName,
 -- ROUND(100*COUNTIF( TRUE ) / count(*)) AS OkNews,
@@ -34,5 +34,5 @@ FROM `{{Datasource}}_{{AdditionalArg}}`
 WHERE test_date > '2008-01-01'
       AND filter.IsValidBest
 
-GROUP BY year, Source
-ORDER BY year, Source
+GROUP BY dates, Source
+ORDER BY dates, Source

@@ -1,7 +1,7 @@
 -- from .../analysis/inspector/summary_views/{{query}}
 SELECT
   "{{Datasource}}" AS Source,
-  EXTRACT(YEAR FROM date) AS year,
+  EXTRACT({{dates}} FROM date) AS dates,
   "{{query}}" AS inspector,
   COUNT(*) AS tests,
   MIN(date) AS First, MAX(date) AS Last,
@@ -17,5 +17,5 @@ FROM (
   FROM `{{Datasource}}`
 )
 
-GROUP BY year, Source
-ORDER BY year, Source
+GROUP BY dates, Source
+ORDER BY dates, Source

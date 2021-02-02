@@ -18,4 +18,4 @@ UNION ALL
 UNION ALL
   (SELECT * FROM `{{ProjectID}}.inspector.summarize_traceroute_sandbox`)
 )
-ORDER BY YEAR, Source
+ORDER BY dates, Source

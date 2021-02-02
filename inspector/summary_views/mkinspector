@@ -22,6 +22,7 @@ function mkview {
   view=`echo "-- Gemerated by $USER $date" ; \
     sed -e 's/"/'"'/g" \
     -e "s;{{ProjectID}};${ProjectID};" \
+    -e "s;{{dates}};YEAR;" \
     -e "s;{{Datasource}};${sourceset};" \
     -e "s;{{AdditionalArg}};${AdditionalArg};" \
     -e "s;{{query}};${file};" $file `
@@ -59,16 +60,19 @@ if false; then
   done
 fi
 
-echo "NDT summaries"
+echo "### NDT summaries"
 # NB: a few of these are missing (ndt7 staging)
 subsources="ndt7 ndt5 web100"
 while read pname source ; do
   for direction in uploads downloads ; do
     for subsource in $subsources ; do
-      if [ \( $pname = "prod" \) -a \( $subsource = "ndt5" -o $subsource = "web100" \) ] ; then 
-        mkview  inspector.summarize_ndt_${pname}_${subsource}_${direction} inspect_ndt_legacy_date.sql \
+#      if [ \( $pname = "prod" \) -a \( $subsource = "ndt5" -o $subsource = "web100" \) ] ; then 
+#        mkview  inspector.summarize_ndt_${pname}_${subsource}_${direction} inspect_ndt_legacy_date.sql \
+#          ${source} ${subsource}_${direction}
+      if [ $subsource != "ndt7" ] ; then
+        mkview  inspector.summarize_ndt_${pname}_${subsource}_${direction} inspect_ndt_legacy_camel.sql \
           ${source} ${subsource}_${direction}
-      elif [ $pname != "XXstaging" -o $subsource != "ndt7" ] ; then
+      elif true ; then
         mkview  inspector.summarize_ndt_${pname}_${subsource}_${direction} inspect_ndt_extended.sql \
           ${source} ${subsource}_${direction}
       else
@@ -77,12 +81,12 @@ while read pname source ; do
     done
   done
 done <<EOF
-prod mlab-oti.library.ndt_unified
+prod mlab-oti.intermediate_ndt.extended
 staging mlab-staging.intermediate_ndt.extended
 sandbox mlab-sandbox.intermediate_ndt.extended
 EOF
 
-# NDT unions, sandbox and prod only
+echo "### NDT unions, sandbox and prod only"
 pname=sandbox
 subsources="ndt7 ndt5 web100"
 for direction in uploads downloads ; do
@@ -94,8 +98,11 @@ for direction in uploads downloads ; do
   mkview inspector.union_ndt_prod_${pname}_all union_ndt_all.sql $pname
 done
 
-
-# Traceroute
+for pname in prod staging sandbox; do
+  mkview inspector.union_ndt_${pname}_all union_ndt_one.sql $pname
+done
+             
+echo "### Traceroute"
 mkview inspector.summarize_traceroute_prod inspect_traceroute.sql measurement-lab.ndt.traceroute
 mkview inspector.summarize_traceroute_prod_legacy inspect_traceroute_legacy.sql mlab-oti.base_tables.traceroute_legacy
 while read pname source ; do

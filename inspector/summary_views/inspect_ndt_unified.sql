@@ -1,7 +1,7 @@
 -- from .../analysis/inspector/summary_views/{{query}}
 SELECT
   CONCAT("{{Datasource}}_unified_", dir) AS Source,
-  EXTRACT(YEAR from date) AS year,
+  EXTRACT({{dates}} from date) AS dates,
   node._instruments AS SubSource,
   "{{query}}" AS inspector,
 
@@ -29,5 +29,5 @@ FROM (
 UNION ALL
   (SELECT *, 'uploads' AS dir, node._instruments FROM `{{Datasource}}.unified_uploads`)
 )
-GROUP BY Source, year, SubSource
-ORDER BY Source, year, SubSource
+GROUP BY Source, dates, SubSource
+ORDER BY Source, dates, SubSource
