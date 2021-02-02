@@ -6,4 +6,4 @@ SELECT * FROM (
 UNION ALL
   (SELECT * FROM `{{ProjectID}}.{{AdditionalArg}}`)
 )
-ORDER BY YEAR, Source
+ORDER BY dates, Source
