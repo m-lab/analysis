@@ -8,8 +8,8 @@
 # bq query --use_legacy_sql=false < models/client_clusters.sql
 
 CREATE OR REPLACE MODEL
-  `mlab-sandbox.gfr.client_clusters_model` OPTIONS(model_type='kmeans',
-    num_clusters=20) AS
+  `mlab-sandbox.gfr.client_clusters_model30` OPTIONS(model_type='kmeans',
+    num_clusters=30) AS
 
 WITH linear AS (
 SELECT LOG10(tests) AS logTests,
