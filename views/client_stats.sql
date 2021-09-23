@@ -1,39 +1,33 @@
-# Create a view that tracks the count of tests by hour and day of the week.
+# Create a view that tracks the count of tests by hour and day of the week,
+# and some other stats that might be useful for clustering.
 # Uses server latitude to adjust the time of day and day of week.
 # Client id is based on IP address, clientName, clientOS, and wscale.
-# TODO add stats for intertest interval
 
-# NOTES:
-# Anything that takes less than a couple slot hours we can probably just
-# do in gardener after processing incoming data each day.
-
-# bq query --use_legacy_sql=false < views/client_stats.sql
+# bq query --use_legacy_sql=false < views/client_stats_interval.sql
 
 CREATE OR REPLACE VIEW
 `mlab-sandbox.gfr.client_stats`
-OPTIONS(description = 'per metro client test stats - tests by day of week and hour of the day')
+OPTIONS(description = 'per metro client test stats')
 AS 
 
-# Select ndt7 downloads (for now)
+# Select ALL ndt7 tests
 # Since this is client characterization, we count uploads and downloads, and don''t
 # care whether the tests are completely valid
-
 WITH tests AS (
   SELECT
   date, ID, raw.ClientIP, a,
   IFNULL(raw.Download, raw.Upload).ServerMeasurements[SAFE_OFFSET(0)].TCPInfo.WScale & 0x0F AS WScale1,
   IFNULL(raw.Download, raw.Upload).ServerMeasurements[SAFE_OFFSET(0)].TCPInfo.WScale >> 4 AS WScale2,
   a.TestTime,
-  --IFNULL(raw.Download.StartTime, raw.Upload.StartTime) AS startTime,
   server.Geo.Longitude,  # TODO should this be client or server?
-  LEFT(server.Site, 3) AS metro, server.Site AS site, server.Machine AS machine,
-  REGEXP_EXTRACT(ID, "(ndt-?.*)-.*") AS NDTVersion,
+  LEFT(server.Site, 3) AS metro,
   IF(raw.Download IS NULL, false, true) AS isDownload,
+  # This is used later for extracting the client metadata.
   IFNULL(raw.Download.ClientMetadata, raw.Upload.ClientMetadata) AS tmpClientMetaData,
   FROM `measurement-lab.ndt.ndt7`
 ),
 
-# This join is quite expensive - about 3 slot hours for 2 months of data, even if the clientName field is never used.
+# These metadata joins are quite expensive - about 3 slot hours for 2 months of data, even if the field is never used.
 add_client_name AS (
   SELECT tests.*, clientName
   FROM tests LEFT JOIN (
@@ -43,61 +37,66 @@ add_client_name AS (
 ),
 
 add_client_os AS (
-  SELECT add_client_name.*, clientOS
+  SELECT add_client_name.* EXCEPT(tmpClientMetaData), clientOS
   FROM add_client_name LEFT JOIN (
     SELECT * EXCEPT(tmpClientMetadata, Name, Value), Value AS clientOS
     FROM add_client_name, add_client_name.tmpClientMetadata
     WHERE Name = "client_os") USING (date, ID)
 ),
 
+# This adds the solar time, which is more useful for global clustering than UTC time.
 solar AS (
-  SELECT *,
+  SELECT * EXCEPT(Longitude),
     TIMESTAMP_ADD(testTime, INTERVAL CAST(-60*Longitude/15 AS INT) MINUTE) AS solarTime,
-    TIMESTAMP_DIFF(testTime, LAG(testTime, 1) OVER sequence, SECOND) AS testInterval,
+    # Compute the time, in seconds, since the previous test of the same type (upload or download)
+    TIMESTAMP_DIFF(testTime, LAG(testTime, 1) OVER sequence, SECOND)AS testInterval,
   FROM add_client_os
+  WHERE date BETWEEN DATE_SUB(CURRENT_DATE(), INTERVAL 93 DAY) AND DATE_SUB(CURRENT_DATE(), INTERVAL 2 DAY)
   WINDOW
     sequence AS (PARTITION BY isDownload, metro, ClientIP, clientName, clientOS, wscale1, wscale2
     ORDER BY a.TestTime)
 ),
 
-day_hour AS (
-  SELECT
-    # TODO correct for latitude. 
-   metro, ClientIP, clientName, clientOS, wscale1, wscale2,
-   EXP(AVG(IF(isDownload,SAFE.LN(a.MeanThroughputMBPS),NULL))) AS meanSpeed,
-   EXP(AVG(IF(isDownload,SAFE.LN(a.MinRTT),NULL))) AS meanMinRTT,
-   EXTRACT(DAYOFWEEK FROM solarTime) AS day, EXTRACT(HOUR FROM solarTime) AS hour,
-   COUNTIF(isDownload) AS downloads,
-   COUNT(*) AS tests
-   FROM solar
-   WHERE date BETWEEN DATE_SUB(CURRENT_DATE(), INTERVAL 93 DAY) AND DATE_SUB(CURRENT_DATE(), INTERVAL 2 DAY)
-   GROUP BY metro, clientIP, clientName, clientOS, day, hour, wscale1, wscale2
+# This adds all of the client aggregations.
+client_stats AS (
+  SELECT metro, ClientIP, clientName, clientOS, wscale1, wscale2,
+    STRUCT( 
+      EXP(AVG(IF(isDownload,SAFE.LN(a.MeanThroughputMBPS),NULL)) ) AS meanSpeed,  # Downloads only.
+      EXP(AVG(IF(isDownload,SAFE.LN(a.MinRTT),NULL)) ) AS meanMinRTT             # Downloads only.
+    ) AS performance_stats,
+    STRUCT (
+      COUNT(*) AS tests,
+      COUNTIF(isDownload) AS downloads,
+      COUNTIF(NOT isDownload) AS uploads,
+      COUNTIF(isDownload)/COUNT(*)  AS dlFraction,
+
+      # These characterize how often the client runs download tests, and how variable that is.
+      AVG(IF(isDownload,testInterval,NULL)) AS downloadInterval,
+      SAFE_DIVIDE(STDDEV(IF(isDownload,testInterval,NULL)),AVG(IF(isDownload,testInterval,NULL))) AS downloadIntervalVariability,
+
+      COUNT(DISTINCT EXTRACT(DAYOFWEEK FROM solarTime))  AS days,
+      COUNT(DISTINCT EXTRACT(HOUR FROM solarTime))  AS hours,
+
+      COUNTIF(EXTRACT(DAYOFWEEK FROM solarTime) = 1)/COUNT(*) AS sunday,
+      COUNTIF(EXTRACT(DAYOFWEEK FROM solarTime) = 2)/COUNT(*) AS monday,
+      COUNTIF(EXTRACT(DAYOFWEEK FROM solarTime) = 3)/COUNT(*) AS tuesday,
+      COUNTIF(EXTRACT(DAYOFWEEK FROM solarTime) = 4)/COUNT(*) AS wednesday,
+      COUNTIF(EXTRACT(DAYOFWEEK FROM solarTime) = 5)/COUNT(*) AS thursday,
+      COUNTIF(EXTRACT(DAYOFWEEK FROM solarTime) = 6)/COUNT(*) AS friday,
+      COUNTIF(EXTRACT(DAYOFWEEK FROM solarTime) = 7)/COUNT(*) AS saturday,
+      
+      COUNTIF(EXTRACT(HOUR FROM solarTime) BETWEEN 0 AND 2)/COUNT(*) AS t00,
+      COUNTIF(EXTRACT(HOUR FROM solarTime) BETWEEN 3 AND 5)/COUNT(*) AS t03,
+      COUNTIF(EXTRACT(HOUR FROM solarTime) BETWEEN 6 AND 8)/COUNT(*) AS t06,
+      COUNTIF(EXTRACT(HOUR FROM solarTime) BETWEEN 9 AND 10)/COUNT(*) AS t09,
+      COUNTIF(EXTRACT(HOUR FROM solarTime) BETWEEN 12 AND 14)/COUNT(*) AS t12,
+      COUNTIF(EXTRACT(HOUR FROM solarTime) BETWEEN 15 AND 17)/COUNT(*) AS t15,
+      COUNTIF(EXTRACT(HOUR FROM solarTime) BETWEEN 18 AND 20)/COUNT(*) AS t18,
+      COUNTIF(EXTRACT(HOUR FROM solarTime) BETWEEN 21 AND 23)/COUNT(*) AS t21
+    ) AS training_stats
+  FROM solar
+  GROUP BY metro, ClientIP, clientName, clientOS, wscale1, wscale2
+  HAVING training_stats.tests > 5 # only bother with this for clients that have more than 5 tests
 )
 
-
-SELECT 
-    metro, ClientIP, clientName, clientOS, wscale1, wscale2,
-    SUM(downloads) AS downloads,
-    EXP(SUM(downloads*SAFE.LN(meanSpeed))/SUM(downloads)) AS meanSpeed,
-    EXP(SUM(downloads*SAFE.LN(meanMinRTT))/SUM(downloads)) AS meanMinRTT,
-    SUM(tests) AS tests,
-    COUNT(DISTINCT day) AS days,
-    COUNT(DISTINCT hour) AS hours,
-    SUM(IF(day = 1,tests,0)) AS sunday,
-    SUM(IF(day = 2,tests,0)) AS monday,
-    SUM(IF(day = 3,tests,0)) AS tuesday,
-    SUM(IF(day = 4,tests,0)) AS wednesday,
-    SUM(IF(day = 5,tests,0)) AS thursday,
-    SUM(IF(day = 6,tests,0)) AS friday,
-    SUM(IF(day = 7,tests,0)) AS saturday,
-    SUM(IF(hour BETWEEN 0 AND 2,tests,0)) AS t00,
-    SUM(IF(hour BETWEEN 3 AND 5,tests,0)) AS t03,
-    SUM(IF(hour BETWEEN 6 AND 8,tests,0)) AS t06,
-    SUM(IF(hour BETWEEN 9 AND 11,tests,0)) AS t09,
-    SUM(IF(hour BETWEEN 12 AND 14,tests,0)) AS t12,
-    SUM(IF(hour BETWEEN 15 AND 17,tests,0)) AS t15,
-    SUM(IF(hour BETWEEN 18 AND 20,tests,0)) AS t18,
-    SUM(IF(hour BETWEEN 21 AND 23,tests,0)) AS t21,
-FROM day_hour
-GROUP BY metro, ClientIP, clientName, clientOS, wscale1, wscale2
-HAVING tests > 5
+SELECT * FROM client_stats
