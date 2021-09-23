@@ -10,7 +10,7 @@
 # bq query --use_legacy_sql=false < views/client_stats_interval.sql
 
 CREATE OR REPLACE VIEW
-`mlab-sandbox.gfr.client_stats_interval`
+`mlab-sandbox.gfr.client_stats_2`
 OPTIONS(description = 'per metro client test stats - tests by day of week and hour of the day')
 AS 
 
@@ -62,10 +62,17 @@ solar AS (
 ),
 
 # This adds the inter-test interval mean and stdev, for downloads only, to ALL tests
-add_intervals AS (
-  SELECT * EXCEPT(a), a.MeanThroughputMBPS, a.MinRTT, 
-    AVG(IF(isDownload,testInterval,NULL)) OVER client_win  AS downloadInterval,
-    STDDEV(IF(isDownload,testInterval,NULL)) OVER client_win AS downloadIntervalVariability,
+some_client_stats AS (
+  SELECT * EXCEPT(a), a.MeanThroughputMBPS, a.MinRTT,
+    STRUCT( 
+      COUNT(*) AS tests,
+      COUNTIF(isDownload) AS downloads,
+      COUNTIF(NOT isDownload) AS uploads,
+      EXP(AVG(IF(isDownload,SAFE.LN(a.MeanThroughputMBPS),NULL)) OVER client_win) AS meanSpeed,  # Downloads only.
+      EXP(AVG(IF(isDownload,SAFE.LN(a.MinRTT),NULL)) OVER client_win) AS meanMinRTT,             # Downloads only.
+      AVG(IF(isDownload,testInterval,NULL)) OVER client_win  AS downloadInterval,
+      STDDEV(IF(isDownload,testInterval,NULL)) OVER client_win AS downloadIntervalVariability
+    ) AS client_stats,
   FROM solar
   GROUP BY date, TestTime, solarTime, testInterval, ID, isDownload, metro, clientIP, clientName, clientOS, wscale1, wscale2,
     MeanThroughputMBPS, MinRTT
@@ -79,45 +86,36 @@ add_intervals AS (
 # are 24 * 7 groupings here, instead of fewer.
 day_hour_counts AS (
   SELECT
-    # TODO correct for latitude. 
    metro, ClientIP, clientName, clientOS, wscale1, wscale2,
-   EXP(AVG(IF(isDownload,SAFE.LN(MeanThroughputMBPS),NULL))) AS meanSpeed,  # Downloads only.
-   EXP(AVG(IF(isDownload,SAFE.LN(MinRTT),NULL))) AS meanMinRTT,
-   EXTRACT(DAYOFWEEK FROM solarTime) AS day, EXTRACT(HOUR FROM solarTime) AS hour,
-   COUNTIF(isDownload) AS downloads,
-   COUNTIF(NOT isDownload) AS uploads,
    COUNT(*) AS tests,
-   ANY_VALUE(downloadInterval) AS downloadInterval,
-   ANY_VALUE(downloadIntervalVariability) AS downloadIntervalVariability,
-   FROM add_intervals
+   ANY_VALUE(client_stats) AS client_stats,
+   EXTRACT(DAYOFWEEK FROM solarTime) AS day, EXTRACT(HOUR FROM solarTime) AS hour,
+   FROM some_client_stats
    GROUP BY metro, clientIP, clientName, clientOS, day, hour, wscale1, wscale2
 )
 
 SELECT 
     metro, ClientIP, clientName, clientOS, wscale1, wscale2,
-    SUM(downloads) AS downloads, SUM(uploads) AS uploads, SUM(tests) AS tests,
-    SUM(downloads-uploads)/SUM(downloads+uploads) AS duRatio,
-    EXP(SUM(downloads*SAFE.LN(meanSpeed))/SUM(downloads)) AS meanSpeed,
-    EXP(SUM(downloads*SAFE.LN(meanMinRTT))/SUM(downloads)) AS meanMinRTT,
-    ANY_VALUE(downloadInterval) AS downloadInterval,
-    ANY_VALUE(downloadIntervalVariability) AS downloadIntervalVariability,
-    COUNT(DISTINCT day) AS days,
-    COUNT(DISTINCT hour) AS hours,
-    SUM(IF(day = 1,tests,0)) AS sunday,
-    SUM(IF(day = 2,tests,0)) AS monday,
-    SUM(IF(day = 3,tests,0)) AS tuesday,
-    SUM(IF(day = 4,tests,0)) AS wednesday,
-    SUM(IF(day = 5,tests,0)) AS thursday,
-    SUM(IF(day = 6,tests,0)) AS friday,
-    SUM(IF(day = 7,tests,0)) AS saturday,
-    SUM(IF(hour BETWEEN 0 AND 2,tests,0)) AS t00,
-    SUM(IF(hour BETWEEN 3 AND 5,tests,0)) AS t03,
-    SUM(IF(hour BETWEEN 6 AND 8,tests,0)) AS t06,
-    SUM(IF(hour BETWEEN 9 AND 11,tests,0)) AS t09,
-    SUM(IF(hour BETWEEN 12 AND 14,tests,0)) AS t12,
-    SUM(IF(hour BETWEEN 15 AND 17,tests,0)) AS t15,
-    SUM(IF(hour BETWEEN 18 AND 20,tests,0)) AS t18,
-    SUM(IF(hour BETWEEN 21 AND 23,tests,0)) AS t21,
+    ANY_VALUE(client_stats) AS client_stats,
+    STRUCT(
+      COUNT(DISTINCT day) AS days,
+      COUNT(DISTINCT hour) AS hours,
+      SUM(IF(day = 1,tests,0)) AS sunday,
+      SUM(IF(day = 2,tests,0)) AS monday,
+      SUM(IF(day = 3,tests,0)) AS tuesday,
+      SUM(IF(day = 4,tests,0)) AS wednesday,
+      SUM(IF(day = 5,tests,0)) AS thursday,
+      SUM(IF(day = 6,tests,0)) AS friday,
+      SUM(IF(day = 7,tests,0)) AS saturday,
+      SUM(IF(hour BETWEEN 0 AND 2,tests,0)) AS t00,
+      SUM(IF(hour BETWEEN 3 AND 5,tests,0)) AS t03,
+      SUM(IF(hour BETWEEN 6 AND 8,tests,0)) AS t06,
+      SUM(IF(hour BETWEEN 9 AND 11,tests,0)) AS t09,
+      SUM(IF(hour BETWEEN 12 AND 14,tests,0)) AS t12,
+      SUM(IF(hour BETWEEN 15 AND 17,tests,0)) AS t15,
+      SUM(IF(hour BETWEEN 18 AND 20,tests,0)) AS t18,
+      SUM(IF(hour BETWEEN 21 AND 23,tests,0)) AS t21
+    ) AS timing_stats
 FROM day_hour_counts
 GROUP BY metro, ClientIP, clientName, clientOS, wscale1, wscale2
-HAVING tests > 5
+HAVING client_stats.tests > 5
