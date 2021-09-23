@@ -15,7 +15,7 @@ SELECT * EXCEPT(NEAREST_CENTROIDS_DISTANCE) FROM ML.PREDICT(MODEL `mlab-sandbox.
 )
 
 SELECT metro, CENTROID_ID, clientName, clientOS, wscale1, wscale2, COUNT(*) AS clients, SUM(tests) AS tests, SUM(downloads) AS downloads, 
-  SUM(tests*duBalance)/SUM(tests) AS duBalance,
+  SUM(tests*dlFraction)/SUM(tests) AS dlFraction, # 0 to 1 indicating what fraction of tests are downloads
   SUM(tests*sunday)/SUM(tests) AS sunday,
   SUM(tests*monday)/SUM(tests) AS monday,
   SUM(tests*tuesday)/SUM(tests) AS tuesday,

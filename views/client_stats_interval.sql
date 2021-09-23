@@ -72,7 +72,7 @@ some_client_stats AS (
       COUNT(*) AS tests,
       COUNTIF(isDownload) AS downloads,
       COUNTIF(NOT isDownload) AS uploads,
-      (COUNTIF(isDownload) - COUNTIF(NOT isDownload))/COUNT(*)  AS duBalance,
+      COUNTIF(isDownload)/COUNT(*)  AS dlFraction,
 
       # These characterize how often the client runs download tests, and how variable that is.
       AVG(IF(isDownload,testInterval,NULL)) AS downloadInterval,
