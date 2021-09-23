@@ -76,7 +76,7 @@ some_client_stats AS (
 
       # These characterize how often the client runs download tests, and how variable that is.
       AVG(IF(isDownload,testInterval,NULL)) AS downloadInterval,
-      STDDEV(IF(isDownload,testInterval,NULL))/AVG(IF(isDownload,testInterval,NULL)) AS downloadIntervalVariability,
+      SAFE_DIVIDE(STDDEV(IF(isDownload,testInterval,NULL)),AVG(IF(isDownload,testInterval,NULL))) AS downloadIntervalVariability,
 
       COUNT(DISTINCT EXTRACT(DAYOFWEEK FROM solarTime))  AS days,
       COUNT(DISTINCT EXTRACT(HOUR FROM solarTime))  AS hours,

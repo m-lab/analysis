@@ -36,7 +36,7 @@ WHERE tests > 10
 ),
 
 alternate AS (
-  SELECT metro, ClientIP, clientName, clientOS, wscale1, wscale2,
+  SELECT --metro, ClientIP, clientName, clientOS, wscale1, wscale2,
     training_stats.* EXCEPT(uploads, downloads, days, hours),
     SAFE.LOG10(training_stats.tests) AS logTests,
   FROM `mlab-sandbox.gfr.client_stats_2`
