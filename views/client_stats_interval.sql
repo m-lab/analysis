@@ -62,53 +62,45 @@ solar AS (
 ),
 
 # This adds all of the client aggregations.
-# This adds the inter-test interval mean and stdev, for downloads only, to ALL tests
 some_client_stats AS (
-  SELECT * EXCEPT(a), a.MeanThroughputMBPS, a.MinRTT,
-  EXTRACT(DAYOFWEEK FROM solarTime) AS day, EXTRACT(HOUR FROM solarTime) AS hour,
+  SELECT metro, ClientIP, clientName, clientOS, wscale1, wscale2,
     STRUCT( 
-      EXP(AVG(IF(isDownload,SAFE.LN(a.MeanThroughputMBPS),NULL)) OVER client_win) AS meanSpeed,  # Downloads only.
-      EXP(AVG(IF(isDownload,SAFE.LN(a.MinRTT),NULL)) OVER client_win) AS meanMinRTT             # Downloads only.
+      EXP(AVG(IF(isDownload,SAFE.LN(a.MeanThroughputMBPS),NULL)) ) AS meanSpeed,  # Downloads only.
+      EXP(AVG(IF(isDownload,SAFE.LN(a.MinRTT),NULL)) ) AS meanMinRTT             # Downloads only.
     ) AS performance_stats,
     STRUCT (
       COUNT(*) AS tests,
       COUNTIF(isDownload) AS downloads,
       COUNTIF(NOT isDownload) AS uploads,
-      (COUNTIF(isDownload) OVER client_win  - COUNTIF(NOT isDownload) OVER client_win)/COUNT(*) OVER client_win AS duBalance,
-      AVG(IF(isDownload,testInterval,NULL)) OVER client_win  AS downloadInterval,
-      STDDEV(IF(isDownload,testInterval,NULL)) OVER client_win AS downloadIntervalVariability,
+      (COUNTIF(isDownload) - COUNTIF(NOT isDownload))/COUNT(*)  AS duBalance,
 
-      COUNT(DISTINCT EXTRACT(DAYOFWEEK FROM solarTime)) AS days,
-      COUNT(DISTINCT EXTRACT(HOUR FROM solarTime)) AS hours,
+      # These characterize how often the client runs download tests, and how variable that is.
+      AVG(IF(isDownload,testInterval,NULL)) AS downloadInterval,
+      STDDEV(IF(isDownload,testInterval,NULL))/AVG(IF(isDownload,testInterval,NULL)) AS downloadIntervalVariability,
 
-      COUNTIF(EXTRACT(DAYOFWEEK FROM solarTime) = 1) OVER client_win AS sunday,
-      COUNTIF(EXTRACT(DAYOFWEEK FROM solarTime) = 2) OVER client_win AS monday,
-      COUNTIF(EXTRACT(DAYOFWEEK FROM solarTime) = 3) OVER client_win AS tuesday,
-      COUNTIF(EXTRACT(DAYOFWEEK FROM solarTime) = 4) OVER client_win AS wednesday,
-      COUNTIF(EXTRACT(DAYOFWEEK FROM solarTime) = 5) OVER client_win AS thursday,
-      COUNTIF(EXTRACT(DAYOFWEEK FROM solarTime) = 6) OVER client_win AS friday,
-      COUNTIF(EXTRACT(DAYOFWEEK FROM solarTime) = 7) OVER client_win AS saturday,
+      COUNT(DISTINCT EXTRACT(DAYOFWEEK FROM solarTime))  AS days,
+      COUNT(DISTINCT EXTRACT(HOUR FROM solarTime))  AS hours,
+
+      COUNTIF(EXTRACT(DAYOFWEEK FROM solarTime) = 1)/COUNT(*) AS sunday,
+      COUNTIF(EXTRACT(DAYOFWEEK FROM solarTime) = 2)/COUNT(*) AS monday,
+      COUNTIF(EXTRACT(DAYOFWEEK FROM solarTime) = 3)/COUNT(*) AS tuesday,
+      COUNTIF(EXTRACT(DAYOFWEEK FROM solarTime) = 4)/COUNT(*) AS wednesday,
+      COUNTIF(EXTRACT(DAYOFWEEK FROM solarTime) = 5)/COUNT(*) AS thursday,
+      COUNTIF(EXTRACT(DAYOFWEEK FROM solarTime) = 6)/COUNT(*) AS friday,
+      COUNTIF(EXTRACT(DAYOFWEEK FROM solarTime) = 7)/COUNT(*) AS saturday,
       
-      COUNTIF(EXTRACT(HOUR FROM solarTime) BETWEEN 0 AND 2) OVER client_win AS t00,
-      COUNTIF(EXTRACT(HOUR FROM solarTime) BETWEEN 3 AND 5) OVER client_win AS t03,
-      COUNTIF(EXTRACT(HOUR FROM solarTime) BETWEEN 6 AND 8) OVER client_win AS t06,
-      COUNTIF(EXTRACT(HOUR FROM solarTime) BETWEEN 9 AND 10) OVER client_win AS t09,
-      COUNTIF(EXTRACT(HOUR FROM solarTime) BETWEEN 12 AND 14) OVER client_win AS t12,
-      COUNTIF(EXTRACT(HOUR FROM solarTime) BETWEEN 15 AND 17) OVER client_win AS t15,
-      COUNTIF(EXTRACT(HOUR FROM solarTime) BETWEEN 18 AND 20) OVER client_win AS t18,
-      COUNTIF(EXTRACT(HOUR FROM solarTime) BETWEEN 21 AND 23) OVER client_win AS t21
+      COUNTIF(EXTRACT(HOUR FROM solarTime) BETWEEN 0 AND 2)/COUNT(*) AS t00,
+      COUNTIF(EXTRACT(HOUR FROM solarTime) BETWEEN 3 AND 5)/COUNT(*) AS t03,
+      COUNTIF(EXTRACT(HOUR FROM solarTime) BETWEEN 6 AND 8)/COUNT(*) AS t06,
+      COUNTIF(EXTRACT(HOUR FROM solarTime) BETWEEN 9 AND 10)/COUNT(*) AS t09,
+      COUNTIF(EXTRACT(HOUR FROM solarTime) BETWEEN 12 AND 14)/COUNT(*) AS t12,
+      COUNTIF(EXTRACT(HOUR FROM solarTime) BETWEEN 15 AND 17)/COUNT(*) AS t15,
+      COUNTIF(EXTRACT(HOUR FROM solarTime) BETWEEN 18 AND 20)/COUNT(*) AS t18,
+      COUNTIF(EXTRACT(HOUR FROM solarTime) BETWEEN 21 AND 23)/COUNT(*) AS t21
     ) AS training_stats
   FROM solar
-  GROUP BY date, TestTime, solarTime, testInterval, ID, isDownload, metro, clientIP, clientName, clientOS, wscale1, wscale2,
-    MeanThroughputMBPS, MinRTT
-  WINDOW
-    client_win AS (PARTITION BY metro, ClientIP, clientName, clientOS, wscale1, wscale2)
+  GROUP BY metro, ClientIP, clientName, clientOS, wscale1, wscale2
+  HAVING training_stats.tests > 5
 )
 
-SELECT 
-    metro, ClientIP, clientName, clientOS, wscale1, wscale2,
-    ANY_VALUE(performance_stats) AS performance_stats,
-    ANY_VALUE(training_stats) AS training_stats,
-FROM some_client_stats
-GROUP BY metro, ClientIP, clientName, clientOS, wscale1, wscale2
-HAVING training_stats.tests > 5
+SELECT * FROM some_client_stats
