@@ -61,61 +61,54 @@ solar AS (
     ORDER BY a.TestTime)
 ),
 
+# This adds all of the client aggregations.
 # This adds the inter-test interval mean and stdev, for downloads only, to ALL tests
 some_client_stats AS (
   SELECT * EXCEPT(a), a.MeanThroughputMBPS, a.MinRTT,
+  EXTRACT(DAYOFWEEK FROM solarTime) AS day, EXTRACT(HOUR FROM solarTime) AS hour,
     STRUCT( 
+      EXP(AVG(IF(isDownload,SAFE.LN(a.MeanThroughputMBPS),NULL)) OVER client_win) AS meanSpeed,  # Downloads only.
+      EXP(AVG(IF(isDownload,SAFE.LN(a.MinRTT),NULL)) OVER client_win) AS meanMinRTT             # Downloads only.
+    ) AS performance_stats,
+    STRUCT (
       COUNT(*) AS tests,
       COUNTIF(isDownload) AS downloads,
       COUNTIF(NOT isDownload) AS uploads,
-      EXP(AVG(IF(isDownload,SAFE.LN(a.MeanThroughputMBPS),NULL)) OVER client_win) AS meanSpeed,  # Downloads only.
-      EXP(AVG(IF(isDownload,SAFE.LN(a.MinRTT),NULL)) OVER client_win) AS meanMinRTT,             # Downloads only.
+      (COUNTIF(isDownload) OVER client_win  - COUNTIF(NOT isDownload) OVER client_win)/COUNT(*) OVER client_win AS duBalance,
       AVG(IF(isDownload,testInterval,NULL)) OVER client_win  AS downloadInterval,
-      STDDEV(IF(isDownload,testInterval,NULL)) OVER client_win AS downloadIntervalVariability
-    ) AS client_stats,
+      STDDEV(IF(isDownload,testInterval,NULL)) OVER client_win AS downloadIntervalVariability,
+
+      COUNT(DISTINCT EXTRACT(DAYOFWEEK FROM solarTime)) AS days,
+      COUNT(DISTINCT EXTRACT(HOUR FROM solarTime)) AS hours,
+
+      COUNTIF(EXTRACT(DAYOFWEEK FROM solarTime) = 1) OVER client_win AS sunday,
+      COUNTIF(EXTRACT(DAYOFWEEK FROM solarTime) = 2) OVER client_win AS monday,
+      COUNTIF(EXTRACT(DAYOFWEEK FROM solarTime) = 3) OVER client_win AS tuesday,
+      COUNTIF(EXTRACT(DAYOFWEEK FROM solarTime) = 4) OVER client_win AS wednesday,
+      COUNTIF(EXTRACT(DAYOFWEEK FROM solarTime) = 5) OVER client_win AS thursday,
+      COUNTIF(EXTRACT(DAYOFWEEK FROM solarTime) = 6) OVER client_win AS friday,
+      COUNTIF(EXTRACT(DAYOFWEEK FROM solarTime) = 7) OVER client_win AS saturday,
+      
+      COUNTIF(EXTRACT(HOUR FROM solarTime) BETWEEN 0 AND 2) OVER client_win AS t00,
+      COUNTIF(EXTRACT(HOUR FROM solarTime) BETWEEN 3 AND 5) OVER client_win AS t03,
+      COUNTIF(EXTRACT(HOUR FROM solarTime) BETWEEN 6 AND 8) OVER client_win AS t06,
+      COUNTIF(EXTRACT(HOUR FROM solarTime) BETWEEN 9 AND 10) OVER client_win AS t09,
+      COUNTIF(EXTRACT(HOUR FROM solarTime) BETWEEN 12 AND 14) OVER client_win AS t12,
+      COUNTIF(EXTRACT(HOUR FROM solarTime) BETWEEN 15 AND 17) OVER client_win AS t15,
+      COUNTIF(EXTRACT(HOUR FROM solarTime) BETWEEN 18 AND 20) OVER client_win AS t18,
+      COUNTIF(EXTRACT(HOUR FROM solarTime) BETWEEN 21 AND 23) OVER client_win AS t21
+    ) AS training_stats
   FROM solar
   GROUP BY date, TestTime, solarTime, testInterval, ID, isDownload, metro, clientIP, clientName, clientOS, wscale1, wscale2,
     MeanThroughputMBPS, MinRTT
   WINDOW
     client_win AS (PARTITION BY metro, ClientIP, clientName, clientOS, wscale1, wscale2)
-),
-
-# This is intended to identify each test by the hour of the day, and the day of the week.
-# It is currently grouping by both, whereas it really should group by each independently.
-# This is ok, as later we sum by day, and sum by 3 hour interval, but this means that there
-# are 24 * 7 groupings here, instead of fewer.
-day_hour_counts AS (
-  SELECT
-   metro, ClientIP, clientName, clientOS, wscale1, wscale2,
-   COUNT(*) AS tests,
-   ANY_VALUE(client_stats) AS client_stats,
-   EXTRACT(DAYOFWEEK FROM solarTime) AS day, EXTRACT(HOUR FROM solarTime) AS hour,
-   FROM some_client_stats
-   GROUP BY metro, clientIP, clientName, clientOS, day, hour, wscale1, wscale2
 )
 
 SELECT 
     metro, ClientIP, clientName, clientOS, wscale1, wscale2,
-    ANY_VALUE(client_stats) AS client_stats,
-    STRUCT(
-      COUNT(DISTINCT day) AS days,
-      COUNT(DISTINCT hour) AS hours,
-      SUM(IF(day = 1,tests,0)) AS sunday,
-      SUM(IF(day = 2,tests,0)) AS monday,
-      SUM(IF(day = 3,tests,0)) AS tuesday,
-      SUM(IF(day = 4,tests,0)) AS wednesday,
-      SUM(IF(day = 5,tests,0)) AS thursday,
-      SUM(IF(day = 6,tests,0)) AS friday,
-      SUM(IF(day = 7,tests,0)) AS saturday,
-      SUM(IF(hour BETWEEN 0 AND 2,tests,0)) AS t00,
-      SUM(IF(hour BETWEEN 3 AND 5,tests,0)) AS t03,
-      SUM(IF(hour BETWEEN 6 AND 8,tests,0)) AS t06,
-      SUM(IF(hour BETWEEN 9 AND 11,tests,0)) AS t09,
-      SUM(IF(hour BETWEEN 12 AND 14,tests,0)) AS t12,
-      SUM(IF(hour BETWEEN 15 AND 17,tests,0)) AS t15,
-      SUM(IF(hour BETWEEN 18 AND 20,tests,0)) AS t18,
-      SUM(IF(hour BETWEEN 21 AND 23,tests,0)) AS t21
-    ) AS timing_stats
-FROM day_hour_counts
+    ANY_VALUE(performance_stats) AS performance_stats,
+    ANY_VALUE(training_stats) AS training_stats,
+FROM some_client_stats
 GROUP BY metro, ClientIP, clientName, clientOS, wscale1, wscale2
-HAVING client_stats.tests > 5
+HAVING training_stats.tests > 5
