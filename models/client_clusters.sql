@@ -8,12 +8,13 @@
 # bq query --use_legacy_sql=false < models/client_clusters.sql
 
 CREATE OR REPLACE MODEL
-  `mlab-sandbox.gfr.client_clusters_model30` OPTIONS(model_type='kmeans',
-    num_clusters=30) AS
+  `mlab-sandbox.gfr.client_clusters_model_intervals_20` OPTIONS(model_type='kmeans',
+    num_clusters=20) AS
 
 WITH linear AS (
 SELECT LOG10(tests) AS logTests,
 days, hours,
+downloadInterval, downloadIntervalVariability,
 sunday/tests AS sunday,
 monday/tests AS monday,
 tuesday/tests AS tuesday,
@@ -29,7 +30,7 @@ t12/tests AS t12,
 t15/tests AS t15,
 t18/tests AS t18,
 t21/tests AS t21,
-FROM `mlab-sandbox.gfr.client_stats`
+FROM `mlab-sandbox.gfr.client_stats_interval`
 WHERE tests > 10 --AND metro = "lga"
 )
 

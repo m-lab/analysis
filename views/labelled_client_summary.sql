@@ -1,6 +1,7 @@
 # Uses the clusters from client_clusters_model to label client groups, and compute aggregate group stats.
 
-CREATE OR REPLACE VIEW `mlab-sandbox.gfr.client_cluster_summaries`
+CREATE MATERIALIZED VIEW
+ `mlab-sandbox.gfr.client_cluster_summaries`
 AS 
 
 WITH labelled AS (
@@ -29,6 +30,7 @@ WHERE tests > 10
 SELECT metro, CENTROID_ID, clientName, clientOS, wscale1, wscale2, COUNT(*) AS clients, SUM(downloads) AS downloads,
 ROUND(EXP(SUM(downloads*SAFE.LN(meanSpeed))/SUM(downloads)),3) AS meanSpeed,
 ROUND(EXP(AVG(SAFE.LN(meanSpeed))),3) AS debiasedSpeed,
+# TODO - is this STDDEV computation valid?
 ROUND(100*SAFE_DIVIDE(EXP(STDDEV(SAFE.LN(meanSpeed))), EXP(AVG(SAFE.LN(meanSpeed)))),1) AS speedDev,
 ROUND(EXP(AVG(SAFE.LN(meanMinRTT))),2) AS debiasedMinRTT,
 FROM labelled
