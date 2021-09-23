@@ -1,6 +1,6 @@
 # Uses the clusters from client_clusters_model to label client groups, and compute aggregate group stats.
 
-CREATE MATERIALIZED VIEW
+CREATE OR REPLACE VIEW
  `mlab-sandbox.gfr.client_cluster_summaries`
 AS 
 
@@ -8,6 +8,7 @@ WITH labelled AS (
 SELECT * EXCEPT(NEAREST_CENTROIDS_DISTANCE) FROM ML.PREDICT(MODEL `mlab-sandbox.gfr.client_clusters_model`,
  (SELECT metro, ClientIP, clientName, clientOS, wscale1, wscale2, downloads, meanSpeed, meanMinRTT, LOG10(tests) AS logTests,
 days, hours,
+downloadInterval, downloadIntervalVariability,
 sunday/tests AS sunday,
 monday/tests AS monday,
 tuesday/tests AS tuesday,
@@ -23,7 +24,7 @@ t12/tests AS t12,
 t15/tests AS t15,
 t18/tests AS t18,
 t21/tests AS t21, 
-FROM `mlab-sandbox.gfr.client_stats`
+FROM `mlab-sandbox.gfr.client_stats_interval`
 WHERE tests > 10 
 )))
 

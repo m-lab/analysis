@@ -14,21 +14,19 @@ CREATE OR REPLACE VIEW
 OPTIONS(description = 'per metro client test stats - tests by day of week and hour of the day')
 AS 
 
-# Select ndt7 downloads (for now)
+# Select ALL ndt7 tests
 # Since this is client characterization, we count uploads and downloads, and don''t
 # care whether the tests are completely valid
-
 WITH tests AS (
   SELECT
   date, ID, raw.ClientIP, a,
   IFNULL(raw.Download, raw.Upload).ServerMeasurements[SAFE_OFFSET(0)].TCPInfo.WScale & 0x0F AS WScale1,
   IFNULL(raw.Download, raw.Upload).ServerMeasurements[SAFE_OFFSET(0)].TCPInfo.WScale >> 4 AS WScale2,
   a.TestTime,
-  --IFNULL(raw.Download.StartTime, raw.Upload.StartTime) AS startTime,
   server.Geo.Longitude,  # TODO should this be client or server?
-  LEFT(server.Site, 3) AS metro, --server.Site AS site, server.Machine AS machine,
-  --REGEXP_EXTRACT(ID, "(ndt-?.*)-.*") AS NDTVersion,
+  LEFT(server.Site, 3) AS metro,
   IF(raw.Download IS NULL, false, true) AS isDownload,
+  # This is used later for extracting the client metadata.
   IFNULL(raw.Download.ClientMetadata, raw.Upload.ClientMetadata) AS tmpClientMetaData,
   FROM `measurement-lab.ndt.ndt7`
 ),
@@ -50,10 +48,12 @@ add_client_os AS (
     WHERE Name = "client_os") USING (date, ID)
 ),
 
+# This adds the solar time, which is more useful for global clustering than UTC time.
 solar AS (
   SELECT * EXCEPT(Longitude),
     TIMESTAMP_ADD(testTime, INTERVAL CAST(-60*Longitude/15 AS INT) MINUTE) AS solarTime,
-    TIMESTAMP_DIFF(testTime, LAG(testTime, 1) OVER sequence, SECOND) AS testInterval,
+    # Compute the time, in seconds, since the previous test of the same type (upload or download)
+    TIMESTAMP_DIFF(testTime, LAG(testTime, 1) OVER sequence, SECOND)AS testInterval,
   FROM add_client_os
   WHERE date BETWEEN DATE_SUB(CURRENT_DATE(), INTERVAL 93 DAY) AND DATE_SUB(CURRENT_DATE(), INTERVAL 2 DAY)
   WINDOW
@@ -61,7 +61,7 @@ solar AS (
     ORDER BY a.TestTime)
 ),
 
-
+# This adds the inter-test interval mean and stdev, for downloads only, to ALL tests
 add_intervals AS (
   SELECT * EXCEPT(a), a.MeanThroughputMBPS, a.MinRTT, 
     AVG(IF(isDownload,testInterval,NULL)) OVER client_win  AS downloadInterval,
@@ -73,14 +73,19 @@ add_intervals AS (
     client_win AS (PARTITION BY metro, ClientIP, clientName, clientOS, wscale1, wscale2)
 ),
 
+# This is intended to identify each test by the hour of the day, and the day of the week.
+# It is currently grouping by both, whereas it really should group by each independently.
+# This is ok, as later we sum by day, and sum by 3 hour interval, but this means that there
+# are 24 * 7 groupings here, instead of fewer.
 day_hour_counts AS (
   SELECT
     # TODO correct for latitude. 
    metro, ClientIP, clientName, clientOS, wscale1, wscale2,
-   EXP(AVG(IF(isDownload,SAFE.LN(MeanThroughputMBPS),NULL))) AS meanSpeed,
+   EXP(AVG(IF(isDownload,SAFE.LN(MeanThroughputMBPS),NULL))) AS meanSpeed,  # Downloads only.
    EXP(AVG(IF(isDownload,SAFE.LN(MinRTT),NULL))) AS meanMinRTT,
    EXTRACT(DAYOFWEEK FROM solarTime) AS day, EXTRACT(HOUR FROM solarTime) AS hour,
    COUNTIF(isDownload) AS downloads,
+   COUNTIF(NOT isDownload) AS uploads,
    COUNT(*) AS tests,
    ANY_VALUE(downloadInterval) AS downloadInterval,
    ANY_VALUE(downloadIntervalVariability) AS downloadIntervalVariability,
@@ -90,10 +95,10 @@ day_hour_counts AS (
 
 SELECT 
     metro, ClientIP, clientName, clientOS, wscale1, wscale2,
-    SUM(downloads) AS downloads,
+    SUM(downloads) AS downloads, SUM(uploads) AS uploads, SUM(tests) AS tests,
+    SUM(downloads-uploads)/SUM(downloads+uploads) AS duRatio,
     EXP(SUM(downloads*SAFE.LN(meanSpeed))/SUM(downloads)) AS meanSpeed,
     EXP(SUM(downloads*SAFE.LN(meanMinRTT))/SUM(downloads)) AS meanMinRTT,
-    SUM(tests) AS tests,
     ANY_VALUE(downloadInterval) AS downloadInterval,
     ANY_VALUE(downloadIntervalVariability) AS downloadIntervalVariability,
     COUNT(DISTINCT day) AS days,
