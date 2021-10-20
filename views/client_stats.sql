@@ -5,8 +5,7 @@
 
 # bq query --use_legacy_sql=false < views/client_stats_interval.sql
 
-CREATE OR REPLACE VIEW
-`mlab-sandbox.gfr.client_stats`
+CREATE OR REPLACE VIEW `mlab-sandbox.gfr.client_stats`
 OPTIONS(description = 'per metro client test stats')
 AS 
 

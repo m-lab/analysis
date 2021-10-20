@@ -7,9 +7,8 @@
 
 # bq query --use_legacy_sql=false < models/client_clusters.sql
 
-CREATE OR REPLACE MODEL
-  `mlab-sandbox.gfr.client_clusters_model_alt_30` OPTIONS(model_type='kmeans',
-    num_clusters=30) AS
+CREATE OR REPLACE MODEL `mlab-sandbox.gfr.client_clusters_model_alt_30`
+  OPTIONS(model_type='kmeans', num_clusters=30) AS
 
 alternate AS (
   SELECT 
