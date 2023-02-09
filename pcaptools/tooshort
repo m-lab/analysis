@@ -1,0 +1,14 @@
+#!/bin/bash
+
+MIN=20
+
+for d in *; do
+  if [ -f "$d/summary.txt" ]; then
+     sz=`awk '/total packets/ { if (NF == 3) print $3 }' "$d/summary.txt"`
+     echo "$d is $sz"
+     if [ -d TOOSHORT -a "$sz" -le $MIN ]; then
+     	echo "$d is $sz move to TOOSHORT"
+     	mv $d TO0SHORT/
+     fi
+  fi
+done

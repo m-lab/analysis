@@ -1,0 +1,10 @@
+#!/bin/bash
+
+for d in *; do
+  if [ -d "$d" ]; then
+     pushd "$d"
+     tcptrace -l -n -G -zxy "$d.pcap.gz" > summary.txt
+     touch comments.txt autolabel.txt
+     popd
+  fi
+done

@@ -25,7 +25,7 @@ SELECT
   ROUND(100*COUNTIF( LENGTH(client.Geo.CountryCode)=2 ) / count(*)) AS OkCountry,
   ROUND(100*COUNTIF( LENGTH(client.Geo.CountryCode3)>0 ) / count(*)) AS OkCountry3,
   ROUND(100*COUNTIF( LENGTH(client.Geo.CountryName)>0 ) / count(*)) AS OkCntryName,
-  ROUND(100*COUNTIF( LENGTH(client.Geo.Region)>0 ) / count(*)) AS OkRegion,
+  0.0 AS OkRegion,
   ROUND(100*COUNTIF( LENGTH(client.Geo.Subdivision1ISOCode)>0 ) / count(*)) AS OkSub1Code,
   ROUND(100*COUNTIF( LENGTH(client.Geo.Subdivision1Name)>0 ) / count(*)) AS OkSub1Name,
   ROUND(100*COUNTIF( LENGTH(client.Geo.Subdivision2ISOCode)>0 ) / count(*)) AS OkSub2Code,
@@ -38,7 +38,7 @@ SELECT
   ROUND(100*COUNTIF( client.Geo.missing = True ) / count(*)) AS OkMissing,
   ROUND(100*COUNTIF( client.Geo.missing = False ) / count(*)) AS OkNotMissing,
   ROUND(100*COUNTIF( client.Network.ASnumber IS NOT NULL ) / count(*)) AS OkASN,
-  ROUND(100*COUNTIF(  LENGTH(client.Network.ASName)>0 ) / count(*)) AS OkASName,
+  ROUND(100*COUNTIF( LENGTH(client.Network.ASName)>0 ) / count(*)) AS OkASName,
   -- ROUND(100*COUNTIF( TRUE ) / count(*)) AS OkNews,
 FROM `{{Datasource}}_{{AdditionalArg}}`
 WHERE date > '2008-01-01'

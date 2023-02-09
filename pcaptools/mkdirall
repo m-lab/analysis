@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# move a directory of *.pcap.gz into directorys
+
+
+for f in *.pcap.gz; do
+    d=`basename $f '.pcap.gz'`
+    mkdir $d
+    mv $f $d/
+done

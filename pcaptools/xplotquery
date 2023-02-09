@@ -1,0 +1,16 @@
+#!/bin/bash
+
+GEOMETRY="-geometry 1600x1200+10+10"
+DOWNLOADS="${HOME}/Downloads/"
+SOURCE=`ls -1tr ${DOWNLOADS} | tail -1`
+
+while read line; do
+      dir=`echo $line | sed 's/,.*//'`
+      if [ ! -d $dir ]; then
+      	 echo "Skipping $dir"
+      else
+	echo $line
+	xplot $GEOMETRY $dir/b2a_tsg.xpl
+      fi
+done < ${DOWNLOADS}${SOURCE}
+      
