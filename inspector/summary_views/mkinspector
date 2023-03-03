@@ -82,6 +82,7 @@ prod mlab-oti.ndt_intermediate.extended
 staging mlab-staging.ndt_intermediate.extended
 sandbox mlab-sandbox.ndt_intermediate.extended
 EOF
+# sandbox mlab-sandbox.ndt_intermediate.extended
 
 echo "Disabling all NDT unions and traceroute"
 exit 0
