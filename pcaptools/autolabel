@@ -1,0 +1,14 @@
+#!/bin/bash
+
+DOWNLOADS="${HOME}/Downloads/"
+SOURCE=`ls -1tr ${DOWNLOADS} | tail -1`
+
+while read line; do
+      dir=`echo $line | sed 's/,.*//'`
+      if [ ! -d $dir ]; then
+      	# echo "Skipping $dir"
+        :
+      else
+	echo $line > $dir/autolabel.txt
+      fi
+done < ${DOWNLOADS}${SOURCE}

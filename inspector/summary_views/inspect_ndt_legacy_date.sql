@@ -24,7 +24,7 @@ SELECT
   ROUND(100*COUNTIF(0.0 <= a.LossRate AND a.LossRate < 0.5) / count(*)) AS OkLoss,
   ROUND(100*COUNTIF( client.Geo.latitude != 0.0 OR client.Geo.longitude != 0.0 ) / count(*)) AS OkLatLong,
   ROUND(100*COUNTIF( LENGTH(client.Geo.country_code)>1 ) / count(*)) AS OkCountry,
-  ROUND(100*COUNTIF( LENGTH(client.Geo.Region)>1 ) / count(*)) AS OkRegion,
+  0.0 AS OKRegion,
 #  ROUND(100*COUNTIF( LENGTH(client.Geo.Subdivision1Name)>1 ) / count(*)) AS OkSub1Name,
   ROUND(100*COUNTIF( LENGTH(client.Geo.postal_code)>1 ) / count(*)) AS OkPostalC,
   ROUND(100*COUNTIF( client.Network.ASnumber IS NOT NULL ) / count(*)) AS OkASN,

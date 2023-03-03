@@ -25,7 +25,7 @@ SELECT
   ROUND(100*COUNTIF( LENGTH(client.Geo.country_code)=2 ) / count(*)) AS OkCountry,
   ROUND(100*COUNTIF( LENGTH(client.Geo.country_code3)>0 ) / count(*)) AS OkCountry3,
   ROUND(100*COUNTIF( LENGTH(client.Geo.country_name)>0 ) / count(*)) AS OkCntryName,
-  ROUND(100*COUNTIF( LENGTH(client.Geo.region)>0 ) / count(*)) AS OkRegion,
+  0.0 AS OKRegion,
   ROUND(100*COUNTIF( LENGTH(client.Geo.Subdivision1ISOCode)>0 ) / count(*)) AS OkSub1Code,
   ROUND(100*COUNTIF( LENGTH(client.Geo.Subdivision1Name)>0 ) / count(*)) AS OkSub1Name,
   ROUND(100*COUNTIF( LENGTH(client.Geo.Subdivision2ISOCode)>0 ) / count(*)) AS OkSub2Code,

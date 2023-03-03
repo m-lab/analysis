@@ -1,0 +1,72 @@
+#!/bin/bash
+
+# install all views locally
+
+set -e
+function mkview {
+  # Write a view to sandbox that is patched to facilitate testing
+  file=$1
+
+  DestID=mlab-collaboration
+  SourceID=mlab-sandbox
+  dataset=mm_preproduction
+  intermediate=${DestID}.${dataset}
+  viewname=`basename $1 .sql`
+  viewname=`basename $viewname .SQL`
+
+  # Forbid tabs
+  if fgrep -s $'\t' $file ; then
+    echo "Error: $file contains tabs"
+    exit 2
+  fi
+
+  date=`date`
+  view=`echo "-- Manual $USER $date" ; \
+    sed -e 's/"/'"'/g" \
+    -e "s;{{\.ProjectID}}\.intermediate_ndt;${intermediate};" \
+    -e "s;{{\.ProjectID}}\.;${SourceID}.;" $file `
+
+  bq rm \
+    --force \
+    --project_id $DestID \
+    $dataset.$viewname
+
+  echo "Creating $dataset.$viewname from $file"
+
+  bq mk \
+    --force \
+    --view "$view" \
+    --use_legacy_sql=false \
+    --project_id=${DestID} \
+    --description "Experimental view subject to frequent breaking changes" \
+    "${dataset}.${viewname}"
+
+
+}
+tool=mkview  # Makes views in mlab-sandbox.mm_unified_testing
+
+
+
+(cd ~/Projects/etl-schema/views
+
+ # all downloads
+ $tool ../views/ndt_intermediate/extended_ndt5_downloads.sql
+ $tool ../views/ndt_intermediate/extended_ndt7_downloads.sql
+ $tool ../views/ndt_intermediate/extended_web100_downloads.sql
+ $tool ../views/ndt/unified_downloads.sql
+
+ # all uploads
+ $tool ../views/ndt_intermediate/extended_ndt7_uploads.sql
+ $tool ../views/ndt_intermediate/extended_ndt5_uploads.sql
+ $tool ../views/ndt_intermediate/extended_web100_uploads.sql
+ $tool ../views/ndt/unified_uploads.sql
+)
+
+exit
+
+
+
+# bq query --project_id mlab-sandbox "$(cat test.sql)"
+
+
+

@@ -66,8 +66,8 @@ subsources="ndt7 ndt5 web100"
 while read pname source ; do
   for direction in uploads downloads ; do
     for subsource in $subsources ; do
-      if [ $subsource != "ndt7" ] ; then
-        mkview  inspector.summarize_ndt_${pname}_${subsource}_${direction} inspect_ndt_legacy_camel.sql \
+      if [ '' ]; then
+          mkview  inspector.summarize_ndt_${pname}_${subsource}_${direction} inspect_ndt_legacy_camel.sql \
           ${source} ${subsource}_${direction}
       elif true ; then
         mkview  inspector.summarize_ndt_${pname}_${subsource}_${direction} inspect_ndt_extended.sql \
@@ -81,12 +81,11 @@ done <<EOF
 prod mlab-oti.ndt_intermediate.extended
 staging mlab-staging.ndt_intermediate.extended
 sandbox mlab-sandbox.ndt_intermediate.extended
-prodX mlab-oti.intermediate_ndt.extended
-stagingX mlab-staging.intermediate_ndt.extended
-sandboxX mlab-sandbox.intermediate_ndt.extended
 EOF
 # sandbox mlab-sandbox.ndt_intermediate.extended
 
+echo "Disabling all NDT unions and traceroute"
+exit 0
 echo "### NDT unions, sandbox and prod only"
 pname=sandboxX
 subsources="ndt7 ndt5 web100"

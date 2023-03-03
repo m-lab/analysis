@@ -1,0 +1,30 @@
+#!/bin/bash
+
+for d in * ; do
+  comments=${d}/comments.txt
+  autolabel=${d}/autolabel.txt
+  summary=${d}/summary.txt
+  if [ ! -d ${d} ] ; then
+    echo "Not a dir: $d"
+    continue
+  fi
+  if [ ! -f $autolabel ] ; then
+    touch $autolabel
+  fi
+  echo "${d}" | cat - $comments $autolabel | grep -s "${@-''}" > /dev/null
+  if [ "$?" != "0" ] ; then
+    continue
+  fi
+  cat $summary
+  cat $autolabel
+  echo $comments
+  cat $comments
+  xplot -geometry 800x600-10+10 $d/a2b_tsg.xpl &
+  pid1=$!
+  sleep 0.05
+  xplot -geometry 800x600-820+10 $d/b2a_tsg.xpl &
+  pid2=$!
+  read ans
+  echo -n "$ans" >> $d/comments.txt
+  kill $pid1 $pid2
+done
