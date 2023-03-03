@@ -1,0 +1,51 @@
+#!/bin/bash
+
+set -x
+
+function mksnapshot {
+  # mksnapshot target timestamp
+  # target=$1
+  timestamp=$2
+  ProjectID="mlab-sandbox"
+  STAR='*'
+
+  # test code
+  source="inspector.summarize_ndt_prod_ndt7_downloads"
+  target=mm_unified_testing.summarize_ndt_prod_ndt7_downloads
+  tmp="${target}_audittmp"
+  destination="${target}_audit"
+  query="SELECT TIMESTAMP('${timestamp}') AS AuditTime, $STAR FROM $source"
+  
+  echo "$query"
+  pdate=`date --date="$timestamp" +%Y%m%d`
+  if [ -z "$pdate" ]; then
+     echo "Invalid audit date"
+     exit 2
+  fi
+
+if true; then
+  # create temp table
+  bq query \
+     --use_legacy_sql=false \
+     --project_id=${ProjectID} \
+     --time_partitioning_type=DAY \
+     --append_table \
+     --schema_update_option=ALLOW_FIELD_ADDITION \
+     --destination_table="${destination}\$${pdate}" \
+     --format=none \
+     "$query"
+
+#     --time_partitioning_field=AuditTime \
+
+fi
+
+return
+# TODO:
+#   Require a manual step to suppress --append_table conditionally to prevent accidental nuking history
+
+}
+
+# iso second
+timestamp=`date --utc --iso-8601=seconds`
+
+mksnapshot TARGET $timestamp

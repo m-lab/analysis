@@ -1,6 +1,7 @@
 -- from .../analysis/inspector/summary_views/{{query}}
 SELECT
   EXTRACT({{dates}} from date) AS dates,
+  "{{dates}}" AS binSize,
   "{{AdditionalArg}}" AS SubSource,
   "{{query}}" AS inspector,
   "{{Datasource}}_{{AdditionalArg}}" AS Source,

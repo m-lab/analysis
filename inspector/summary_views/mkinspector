@@ -66,9 +66,6 @@ subsources="ndt7 ndt5 web100"
 while read pname source ; do
   for direction in uploads downloads ; do
     for subsource in $subsources ; do
-#      if [ \( $pname = "prod" \) -a \( $subsource = "ndt5" -o $subsource = "web100" \) ] ; then 
-#        mkview  inspector.summarize_ndt_${pname}_${subsource}_${direction} inspect_ndt_legacy_date.sql \
-#          ${source} ${subsource}_${direction}
       if [ $subsource != "ndt7" ] ; then
         mkview  inspector.summarize_ndt_${pname}_${subsource}_${direction} inspect_ndt_legacy_camel.sql \
           ${source} ${subsource}_${direction}
@@ -81,13 +78,17 @@ while read pname source ; do
     done
   done
 done <<EOF
-prod mlab-oti.intermediate_ndt.extended
-staging mlab-staging.intermediate_ndt.extended
-sandbox mlab-sandbox.intermediate_ndt.extended
+prod mlab-oti.ndt_intermediate.extended
+staging mlab-staging.ndt_intermediate.extended
+sandbox mlab-sandbox.ndt_intermediate.extended
+prodX mlab-oti.intermediate_ndt.extended
+stagingX mlab-staging.intermediate_ndt.extended
+sandboxX mlab-sandbox.intermediate_ndt.extended
 EOF
+# sandbox mlab-sandbox.ndt_intermediate.extended
 
 echo "### NDT unions, sandbox and prod only"
-pname=sandbox
+pname=sandboxX
 subsources="ndt7 ndt5 web100"
 for direction in uploads downloads ; do
   for subsource in $subsources ; do

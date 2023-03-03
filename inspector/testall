@@ -8,36 +8,25 @@ set -e
 
 (cd ~/Projects/etl-schema/views
 
-# New intermediate_ndt
-$tool ../views/intermediate_ndt/referenced-by/extended_ndt7_downloads.sql
-$tool ../views/intermediate_ndt/referenced-by/extended_ndt5_downloads.sql
-$tool ../views/intermediate_ndt/referenced-by/extended_web100_downloads.sql
-$tool ../views/intermediate_ndt/referenced-by/extended_ndt7_uploads.sql
-$tool ../views/intermediate_ndt/referenced-by/extended_ndt5_uploads.sql
-$tool ../views/intermediate_ndt/referenced-by/extended_web100_uploads.sql
+# New ndt_intermediate
+$tool ../views/ndt_intermediate/extended_ndt7_downloads.sql
+$tool ../views/ndt_intermediate/extended_ndt5_downloads.sql
+$tool ../views/ndt_intermediate/extended_web100_downloads.sql
+$tool ../views/ndt_intermediate/extended_ndt7_uploads.sql
+$tool ../views/ndt_intermediate/extended_ndt5_uploads.sql
+$tool ../views/ndt_intermediate/extended_web100_uploads.sql
 
-# Stub old library
-# $tool ../views/library/referenced-by/ndt_unified_ndt7_downloads.sql
-# $tool ../views/library/referenced-by/ndt_unified_ndt5_downloads.sql
-# $tool ../views/library/referenced-by/ndt_unified_web100_downloads.sql
-# $tool ../views/library/referenced-by/ndt_unified_ndt7_uploads.sql
-# $tool ../views/library/referenced-by/ndt_unified_ndt5_uploads.sql
-# $tool ../views/library/referenced-by/ndt_unified_web100_uploads.sql
+# New unified 
+$tool ../views/ndt/unified_downloads.sql
+$tool ../views/ndt/unified_uploads.sql
 
-# New unified
-$tool ../views/ndt/referenced-by/referenced-by/unified_downloads.sql
-$tool ../views/ndt/referenced-by/referenced-by/unified_uploads.sql
-# filtered
-$tool ../views/ndt/referenced-by/referenced-by/ndt7_downloads.sql
-$tool ../views/ndt/referenced-by/referenced-by/ndt7_uploads.sql
-# Legacy unified
-$tool ../views/ndt/referenced-by/referenced-by/unified_downloads_*.sql
-$tool ../views/ndt/referenced-by/referenced-by/unified_uploads_*.sql
-# Revised comments
-$tool ../views/ndt/ndt5.sql
-$tool ../views/ndt/tcpinfo.sql
-$tool ../views/ndt/traceroute.sql
-$tool ../views/ndt/web100.sql
+# New ndt_raw
+$tool ../views/ndt_raw/web100_legacy.sql
+$tool ../views/ndt_raw/ndt5_legacy.sql
+$tool ../views/ndt_raw/traceroute_legacy.sql
+$tool ../views/ndt_raw/tcpinfo_legacy.sql
+$tool ../views/ndt_raw/annotation.sql
+$tool ../views/ndt_raw/ndt7.sql
 )
 
 exit
