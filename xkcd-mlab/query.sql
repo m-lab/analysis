@@ -1,18 +1,31 @@
+
 WITH ndtLegacy AS (
-  SELECT NET.SAFE_IP_FROM_STRING(connection_spec.client_ip) AS ip,   8 * (web100_log_entry.snap.HCThruOctetsAcked / (web100_log_entry.snap.SndLimTimeRwin + web100_log_entry.snap.SndLimTimeCwnd + web100_log_entry.snap.SndLimTimeSnd)) AS mbps
-  FROM `measurement-lab.ndt.downloads`
-  WHERE partition_date BETWEEN DATE("{YEAR}-01-01") AND DATE("{YEAR}-12-31")
+  SELECT NET.SAFE_IP_FROM_STRING(raw.connection.client_ip) AS ip,
+  a.MeanThroughputMbps AS mbps
+  FROM `measurement-lab.ndt.web100`
+  WHERE DATE BETWEEN ("{YEAR}-01-01") AND DATE("{YEAR}-12-31")
+  AND a.MeanThroughputMbps IS NOT NULL
 ),
 ndt5 AS (
-  SELECT NET.SAFE_IP_FROM_STRING(result.S2C.ClientIP) AS ip, result.S2C.MeanThroughputMbps AS mbps
+  SELECT NET.SAFE_IP_FROM_STRING(raw.ClientIP) AS ip,
+  a.MeanThroughputMbps AS mbps
   FROM `measurement-lab.ndt.ndt5`
-  WHERE partition_date BETWEEN DATE("{YEAR}-01-01") AND DATE("{YEAR}-12-31")
-    AND result.S2C IS NOT NULL
+  WHERE DATE BETWEEN ("{YEAR}-01-01") AND DATE("{YEAR}-12-31")
+    AND a.MeanThroughputMbps IS NOT NULL
+),
+ndt7 AS (
+  SELECT NET.SAFE_IP_FROM_STRING(raw.ClientIP) AS ip,
+  a.MeanThroughputMbps AS mbps
+  FROM `measurement-lab.ndt.ndt7`
+  WHERE DATE BETWEEN ("{YEAR}-01-01") AND DATE("{YEAR}-12-31")
+    AND a.MeanThroughputMbps IS NOT NULL
 ),
 unifiedndt AS (
   SELECT * FROM ndt5
   UNION ALL
   SELECT * FROM ndtLegacy
+  UNION ALL
+  SELECT * FROM ndt7
 ),
 ndtv4 AS (
 SELECT NET.IP_TRUNC(ip, 24) AS netblock, ip, mbps
